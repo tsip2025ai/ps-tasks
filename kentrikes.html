@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Εφαρμογή Παρακολούθησης Εκκρεμοτήτων - Κεντρικές Υπηρεσίες Π.Σ.">
+    <title>Κεντρικές Υπηρεσίες Π.Σ. - Εκκρεμότητες</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%232c3e50'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='white'>ΚΥ</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{--primary:#2c3e50;--primary-dark:#1a252f;--secondary:#16a085;--success:#28a745;--warning:#ffc107;--danger:#dc3545;--info:#17a2b8;--light:#f8f9fa;--gray-50:#f8fafb;--gray-100:#f8f9fa;--gray-200:#e9ecef;--gray-300:#dee2e6;--gray-400:#ced4da;--gray-500:#adb5bd;--gray-600:#6c757d;--gray-700:#495057;--gray-800:#343a40;--shadow:0 2px 8px rgba(0,0,0,0.1);--shadow-lg:0 4px 16px rgba(0,0,0,0.15);--radius:8px;--radius-lg:12px;--header-height:60px;--sidebar-width:340px}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--gray-100);color:var(--gray-800);line-height:1.5}
+        .header{position:fixed;top:0;left:0;right:0;height:var(--header-height);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;padding:0 1rem;z-index:1000;box-shadow:var(--shadow-lg)}
+        .menu-btn{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:0.5rem;margin-right:1rem;border-radius:4px}
+        .menu-btn:hover{background:rgba(255,255,255,0.1)}
+        .header-title{display:flex;align-items:center;gap:0.75rem;flex:1}
+        .logo{width:40px;height:40px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary);font-size:0.85rem}
+        .header h1{font-size:1.1rem;font-weight:600}
+        .header-subtitle{font-size:0.75rem;opacity:0.9}
+        .header-actions{display:flex;gap:0.5rem}
+        .icon-btn{background:rgba(255,255,255,0.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem}
+        .icon-btn:hover{background:rgba(255,255,255,0.2)}
+        .sidebar{position:fixed;top:var(--header-height);left:0;width:var(--sidebar-width);height:calc(100vh - var(--header-height));background:#fff;box-shadow:var(--shadow-lg);z-index:999;transform:translateX(-100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+        .sidebar.open{transform:translateX(0)}
+        .sidebar-header{padding:1rem;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;background:var(--gray-50)}
+        .sidebar-header h2{font-size:1rem;color:var(--primary)}
+        .sidebar-close{background:none;border:none;font-size:1.25rem;color:var(--gray-600);cursor:pointer}
+        .sidebar-search{padding:0.75rem 1rem;border-bottom:1px solid var(--gray-200)}
+        .sidebar-search input{width:100%;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.9rem}
+        .sidebar-search input:focus{outline:none;border-color:var(--primary)}
+        .org-tree{flex:1;overflow-y:auto;padding:0.5rem 0}
+        .org-item{border-bottom:1px solid var(--gray-100)}
+        .org-header{display:flex;align-items:center;padding:0.6rem 1rem;cursor:pointer;gap:0.5rem;transition:background 0.2s}
+        .org-header:hover{background:var(--gray-100)}
+        .org-header.active{background:rgba(44,62,80,0.1);color:var(--primary);font-weight:500}
+        .org-toggle{width:18px;font-size:0.7rem;color:var(--gray-500);transition:transform 0.2s}
+        .org-toggle.expanded{transform:rotate(90deg)}
+        .org-toggle.hidden{visibility:hidden}
+        .org-icon{font-size:0.9rem;width:20px;text-align:center}
+        .org-icon.root{color:var(--primary)}
+        .org-icon.hq{color:#c41e3a}
+        .org-icon.academy{color:#9b59b6}
+        .org-icon.health{color:#1abc9c}
+        .org-icon.arson{color:#e74c3c}
+        .org-icon.center{color:#3498db}
+        .org-icon.aerial{color:#f39c12}
+        .org-icon.maritime{color:#16a085}
+        .org-icon.logistics{color:#95a5a6}
+        .org-icon.department{color:#7f8c8d}
+        .org-name{flex:1;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .org-badge{background:var(--danger);color:#fff;font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:10px;min-width:18px;text-align:center}
+        .org-children{display:none;padding-left:1.25rem;background:var(--gray-50)}
+        .org-children.expanded{display:block}
+        .overlay{position:fixed;top:var(--header-height);left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:998;opacity:0;visibility:hidden;transition:opacity 0.3s}
+        .overlay.active{opacity:1;visibility:visible}
+        .main{margin-top:var(--header-height);padding:1.5rem;min-height:calc(100vh - var(--header-height))}
+        @media(min-width:1024px){.sidebar{transform:translateX(0)}.main{margin-left:var(--sidebar-width)}.overlay{display:none}.sidebar-close{display:none}}
+        .breadcrumb{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem;font-size:0.85rem}
+        .breadcrumb a{color:var(--gray-600);text-decoration:none}
+        .breadcrumb a:hover{color:var(--primary)}
+        .breadcrumb a:not(:last-child)::after{content:'/';margin-left:0.5rem;color:var(--gray-400)}
+        .breadcrumb a:last-child{color:var(--primary);font-weight:500}
+        .unit-card{background:#fff;border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow)}
+        .unit-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+        .unit-title{font-size:1.4rem;color:var(--primary)}
+        .unit-type{background:var(--primary);color:#fff;padding:0.3rem 0.75rem;border-radius:var(--radius);font-size:0.8rem}
+        .unit-desc{margin-top:0.75rem;padding:0.75rem;background:var(--gray-50);border-left:4px solid var(--secondary);border-radius:var(--radius);font-size:0.9rem;color:var(--gray-700);line-height:1.6}
+        .unit-location{display:flex;align-items:center;gap:0.5rem;color:var(--gray-600);font-size:0.9rem;margin-top:0.5rem}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem}
+        .stat-box{display:flex;align-items:center;gap:1rem;padding:1rem;border-radius:var(--radius)}
+        .stat-box i{font-size:1.5rem}
+        .stat-box.pending{background:#fff3cd}
+        .stat-box.pending i{color:var(--warning)}
+        .stat-box.progress{background:#cce5ff}
+        .stat-box.progress i{color:var(--info)}
+        .stat-box.completed{background:#d4edda}
+        .stat-box.completed i{color:var(--success)}
+        .stat-box.overdue{background:#f8d7da}
+        .stat-box.overdue i{color:var(--danger)}
+        .stat-number{font-size:1.5rem;font-weight:700;display:block}
+        .stat-label{font-size:0.75rem;color:var(--gray-600)}
+        .subunits-section{margin-bottom:1.5rem}
+        .section-title{display:flex;align-items:center;gap:0.5rem;font-size:1.1rem;color:var(--primary);margin-bottom:1rem}
+        .subunits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+        .subunit-card{background:#fff;border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow);cursor:pointer;border-left:4px solid var(--primary);transition:transform 0.2s,box-shadow 0.2s}
+        .subunit-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+        .subunit-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem}
+        .subunit-name{font-weight:600;color:var(--primary);font-size:0.9rem}
+        .subunit-type{font-size:0.7rem;background:var(--gray-200);padding:0.15rem 0.4rem;border-radius:4px;color:var(--gray-600)}
+        .subunit-stats{display:flex;gap:1rem;font-size:0.8rem}
+        .subunit-stat{display:flex;align-items:center;gap:0.25rem}
+        .subunit-stat.p{color:var(--warning)}
+        .subunit-stat.i{color:var(--info)}
+        .subunit-stat.c{color:var(--success)}
+        .tasks-section{background:#fff;border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow)}
+        .tasks-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+        .tasks-actions{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center}
+        .filter-select{padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.85rem;background:#fff}
+        .filter-select:focus{outline:none;border-color:var(--primary)}
+        .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;border:none;border-radius:var(--radius);font-size:0.9rem;font-weight:500;cursor:pointer;transition:background 0.2s}
+        .btn-primary{background:var(--primary);color:#fff}
+        .btn-primary:hover{background:var(--primary-dark)}
+        .btn-secondary{background:var(--gray-200);color:var(--gray-700)}
+        .btn-secondary:hover{background:var(--gray-300)}
+        .btn-danger{background:var(--danger);color:#fff}
+        .btn-danger:hover{background:#c82333}
+        .tasks-list{display:flex;flex-direction:column;gap:0.75rem}
+        .task-item{display:flex;gap:1rem;padding:1rem;background:var(--gray-50);border-radius:var(--radius);border-left:4px solid var(--gray-400);transition:background 0.2s}
+        .task-item:hover{background:var(--gray-100)}
+        .task-item.high{border-left-color:var(--danger)}
+        .task-item.medium{border-left-color:var(--warning)}
+        .task-item.low{border-left-color:var(--success)}
+        .task-item.done{opacity:0.6}
+        .task-checkbox input{width:20px;height:20px;cursor:pointer;accent-color:var(--primary)}
+        .task-content{flex:1;min-width:0}
+        .task-title{font-weight:600;color:var(--gray-800);margin-bottom:0.25rem;cursor:pointer}
+        .task-title:hover{color:var(--primary)}
+        .done .task-title{text-decoration:line-through;color:var(--gray-500)}
+        .task-meta{display:flex;flex-wrap:wrap;gap:0.75rem;font-size:0.8rem;color:var(--gray-600)}
+        .task-meta span{display:flex;align-items:center;gap:0.25rem}
+        .task-meta .overdue{color:var(--danger);font-weight:500}
+        .status-badge{padding:0.15rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:500}
+        .status-badge.pending{background:#fff3cd;color:#856404}
+        .status-badge.in-progress{background:#cce5ff;color:#004085}
+        .status-badge.completed{background:#d4edda;color:#155724}
+        .task-actions{display:flex;gap:0.25rem}
+        .task-actions button{background:none;border:none;padding:0.5rem;cursor:pointer;color:var(--gray-500);border-radius:4px}
+        .task-actions button:hover{background:var(--gray-200);color:var(--gray-700)}
+        .task-actions button.del:hover{background:#f8d7da;color:var(--danger)}
+        .empty-state{text-align:center;padding:3rem 1rem;color:var(--gray-500)}
+        .empty-state i{font-size:3rem;margin-bottom:1rem;opacity:0.5}
+        .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:opacity 0.3s;padding:1rem}
+        .modal.active{opacity:1;visibility:visible}
+        .modal-content{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;transform:scale(0.9);transition:transform 0.3s}
+        .modal.active .modal-content{transform:scale(1)}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid var(--gray-200)}
+        .modal-header h2{font-size:1.2rem;color:var(--primary)}
+        .modal-close{background:none;border:none;font-size:1.5rem;color:var(--gray-500);cursor:pointer}
+        .modal-body{padding:1.5rem}
+        .form-group{margin-bottom:1rem}
+        .form-group label{display:block;margin-bottom:0.35rem;font-weight:500;color:var(--gray-700);font-size:0.9rem}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:0.6rem 0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.95rem;font-family:inherit}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(44,62,80,0.1)}
+        .form-row{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+        @media(max-width:480px){.form-row{grid-template-columns:1fr}}
+        .form-actions{display:flex;justify-content:flex-end;gap:0.75rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--gray-200)}
+        .toast-container{position:fixed;bottom:1rem;right:1rem;z-index:3000}
+        .toast{background:var(--gray-800);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius);margin-top:0.5rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:0.75rem;animation:slideIn 0.3s ease}
+        .toast.success{background:var(--success)}
+        .toast.error{background:var(--danger)}
+        .toast.warning{background:var(--warning);color:var(--gray-800)}
+        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @media(max-width:768px){
+            .header h1{font-size:1rem}
+            .header-subtitle{display:none}
+            .unit-title{font-size:1.2rem}
+            .tasks-header{flex-direction:column}
+            .tasks-actions{width:100%}
+            .filter-select{flex:1}
+            .task-item{flex-direction:column}
+            .task-actions{justify-content:flex-end}
+        }
+        .acronym{font-size:0.75rem;color:var(--gray-600);margin-top:0.25rem;font-style:italic}
+        .install-banner{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--gray-200);box-shadow:0 -4px 16px rgba(0,0,0,0.15);padding:1rem;transform:translateY(100%);transition:transform 0.3s ease;z-index:1500}
+        .install-banner.show{transform:translateY(0)}
+        .install-content{display:flex;justify-content:space-between;align-items:center;gap:1rem;max-width:900px;margin:0 auto;flex-wrap:wrap}
+        .install-content p{font-size:0.85rem;color:var(--gray-600)}
+        .install-actions{display:flex;gap:0.5rem;flex-wrap:wrap}
+        @media(max-width:600px){.install-content{flex-direction:column;align-items:flex-start}}
+        .detail-section{margin-bottom:1rem}
+        .detail-section h4{font-size:0.8rem;color:var(--gray-600);margin-bottom:0.25rem;text-transform:uppercase}
+        .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+    </style>
+    <script>
+        (function(){const path=window.location.pathname||'/';const scope=path.endsWith('/')?path:path.substring(0,path.lastIndexOf('/')+1)||'/';const iconSvg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%232c3e50'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='#ffffff'>ΚΥ</text></svg>";const iconData='data:image/svg+xml;base64,'+btoa(iconSvg);const manifestData={name:'Κεντρικές Υπηρεσίες Π.Σ.',short_name:'Κεντρικές ΠΣ',start_url:path,scope:scope,display:'standalone',background_color:'#ffffff',theme_color:'#2c3e50',icons:[{src:iconData,sizes:'192x192',type:'image/svg+xml'},{src:iconData,sizes:'512x512',type:'image/svg+xml'}]};const manifestBlob=new Blob([JSON.stringify(manifestData)],{type:'application/json'});const manifestURL=URL.createObjectURL(manifestBlob);const manifestLink=document.createElement('link');manifestLink.rel='manifest';manifestLink.href=manifestURL;document.head.appendChild(manifestLink);})();
+    </script>
+</head>
+<body>
+    <header class="header">
+        <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+        <div class="header-title">
+            <div class="logo">ΚΥ</div>
+            <div><h1>Κεντρικές Υπηρεσίες Π.Σ.</h1><span class="header-subtitle">Παρακολούθηση Εκκρεμοτήτων</span></div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="statsBtn" title="Στατιστικά"><i class="fas fa-chart-bar"></i></button>
+            <button class="icon-btn" id="exportBtn" title="Εξαγωγή"><i class="fas fa-download"></i></button>
+        </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h2><i class="fas fa-building"></i> Κεντρικές Υπηρεσίες</h2><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
+        <div class="sidebar-search"><input type="text" id="searchTree" placeholder="Αναζήτηση..."></div>
+        <nav class="org-tree" id="orgTree"></nav>
+    </aside>
+
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main" id="main">
+        <nav class="breadcrumb" id="breadcrumb"></nav>
+        <div class="unit-card">
+            <div class="unit-header">
+                <div>
+                    <h2 class="unit-title" id="unitTitle">Κεντρικές Υπηρεσίες Π.Σ.</h2>
+                    <div class="acronym" id="unitAcronym"></div>
+                    <div class="unit-location" id="unitLocation" style="display:none;"><i class="fas fa-map-marker-alt"></i><span id="locationText"></span></div>
+                </div>
+                <span class="unit-type" id="unitType">Κεντρική Υπηρεσία</span>
+            </div>
+            <div class="unit-desc" id="unitDesc" style="display:none;"></div>
+            <div class="stats-grid">
+                <div class="stat-box pending"><i class="fas fa-clock"></i><div><span class="stat-number" id="sPending">0</span><span class="stat-label">Εκκρεμούν</span></div></div>
+                <div class="stat-box progress"><i class="fas fa-spinner"></i><div><span class="stat-number" id="sProgress">0</span><span class="stat-label">Σε Εξέλιξη</span></div></div>
+                <div class="stat-box completed"><i class="fas fa-check-circle"></i><div><span class="stat-number" id="sCompleted">0</span><span class="stat-label">Ολοκληρώθηκαν</span></div></div>
+                <div class="stat-box overdue"><i class="fas fa-exclamation-triangle"></i><div><span class="stat-number" id="sOverdue">0</span><span class="stat-label">Εκπρόθεσμα</span></div></div>
+            </div>
+        </div>
+
+        <div class="subunits-section" id="subunitsSection">
+            <h3 class="section-title"><i class="fas fa-sitemap"></i> Υποκείμενες Μονάδες</h3>
+            <div class="subunits-grid" id="subunitsGrid"></div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="tasks-header">
+                <h3 class="section-title"><i class="fas fa-tasks"></i> Εκκρεμότητες</h3>
+                <div class="tasks-actions">
+                    <select class="filter-select" id="filterStatus"><option value="">Όλες οι καταστάσεις</option><option value="pending">Εκκρεμεί</option><option value="in-progress">Σε Εξέλιξη</option><option value="completed">Ολοκληρώθηκε</option></select>
+                    <select class="filter-select" id="filterPriority"><option value="">Προτεραιότητα</option><option value="high">Υψηλή</option><option value="medium">Μεσαία</option><option value="low">Χαμηλή</option></select>
+                    <button class="btn btn-primary" id="addTaskBtn"><i class="fas fa-plus"></i> Νέα</button>
+                </div>
+            </div>
+            <div class="tasks-list" id="tasksList"></div>
+        </div>
+    </main>
+
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header"><h2 id="modalTitle">Νέα Εκκρεμότητα</h2><button class="modal-close" data-close="taskModal">&times;</button></div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+                    <div class="form-group"><label>Τίτλος *</label><input type="text" id="taskTitle" required placeholder="Τίτλος εκκρεμότητας"></div>
+                    <div class="form-group"><label>Περιγραφή</label><textarea id="taskDesc" rows="3" placeholder="Περιγραφή..."></textarea></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Προτεραιότητα</label><select id="taskPriority"><option value="low">Χαμηλή</option><option value="medium" selected>Μεσαία</option><option value="high">Υψηλή</option></select></div>
+                        <div class="form-group"><label>Κατάσταση</label><select id="taskStatus"><option value="pending">Εκκρεμεί</option><option value="in-progress">Σε Εξέλιξη</option><option value="completed">Ολοκληρώθηκε</option></select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Προθεσμία</label><input type="date" id="taskDeadline"></div>
+                        <div class="form-group"><label>Υπεύθυνος</label><input type="text" id="taskAssignee" placeholder="Όνομα"></div>
+                    </div>
+                    <div class="form-actions"><button type="button" class="btn btn-secondary" data-close="taskModal">Ακύρωση</button><button type="submit" class="btn btn-primary">Αποθήκευση</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Λεπτομέρειες</h2><button class="modal-close" data-close="detailModal">&times;</button></div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content" style="max-width:400px">
+            <div class="modal-header"><h2>Επιβεβαίωση</h2><button class="modal-close" data-close="deleteModal">&times;</button></div>
+            <div class="modal-body"><p>Διαγραφή αυτής της εκκρεμότητας;</p><div class="form-actions"><button class="btn btn-secondary" data-close="deleteModal">Ακύρωση</button><button class="btn btn-danger" id="confirmDelete">Διαγραφή</button></div></div>
+        </div>
+    </div>
+
+    <div class="modal" id="statsModal">
+        <div class="modal-content" style="max-width:700px">
+            <div class="modal-header"><h2>Στατιστικά Κεντρικών Υπηρεσιών</h2><button class="modal-close" data-close="statsModal">&times;</button></div>
+            <div class="modal-body" id="statsContent"></div>
+        </div>
+    </div>
+
+    <div class="install-banner" id="installBanner">
+        <div class="install-content">
+            <div><strong>Εγκαταστήστε την εφαρμογή</strong><p>Προσθέστε την στην αρχική οθόνη για άμεση πρόσβαση.</p></div>
+            <div class="install-actions"><button class="btn btn-secondary" id="installDismiss">Αργότερα</button><button class="btn btn-primary" id="installBtn"><i class="fas fa-download"></i> Εγκατάσταση</button></div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const ORG_DATA={
+            id:'root',
+            name:'Κεντρικές Υπηρεσίες Π.Σ.',
+            type:'root',
+            icon:'building',
+            description:'Οι Κεντρικές Υπηρεσίες έχουν αρμοδιότητα σε όλη την Ελλάδα και διασφαλίζουν την ενιαία στρατηγική και συντονισμό του Πυροσβεστικού Σώματος.',
+            children:[
+                {
+                    id:'aps',
+                    name:'Αρχηγείο Πυροσβεστικού Σώματος',
+                    acronym:'Α.Π.Σ.',
+                    type:'hq',
+                    icon:'building-columns',
+                    location:'Αθήνα',
+                    description:'Ανώτατο διοικητικό όργανο που καθορίζει τη στρατηγική, την πολιτική και τον συντονισμό σε όλη την επικράτεια. Διοικεί, σχεδιάζει και εποπτεύει όλες τις δράσεις του Πυροσβεστικού Σώματος.'
+                },
+                {
+                    id:'pyra',
+                    name:'Πυροσβεστική Ακαδημία',
+                    acronym:'ΠΥΡ.Α.',
+                    type:'academy',
+                    icon:'university',
+                    location:'Αθήνα',
+                    description:'Αρμόδια για την εκπαίδευση και επιμόρφωση των στελεχών του Σώματος. Λειτουργεί με σχολές αξιωματικών και πυροσβεστών, παρέχοντας θεωρητική και πρακτική κατάρτιση υψηλού επιπέδου.',
+                    children:[
+                        {id:'pyra-officers',name:'Σχολή Αξιωματικών',type:'department',icon:'user-graduate',location:'Αθήνα'},
+                        {id:'pyra-firefighters',name:'Σχολή Πυροσβεστών',type:'department',icon:'graduation-cap',location:'Αθήνα'},
+                        {id:'pyra-training',name:'Τμήμα Επιμόρφωσης',type:'department',icon:'chalkboard-teacher',location:'Αθήνα'}
+                    ]
+                },
+                {
+                    id:'ygyps',
+                    name:'Υγειονομική Υπηρεσία Πυροσβεστικού Σώματος',
+                    acronym:'ΥΓ.Υ.Π.Σ.',
+                    type:'health',
+                    icon:'hospital',
+                    location:'Αθήνα',
+                    description:'Παρέχει ιατρική και υγειονομική υποστήριξη στο προσωπικό, με έμφαση στην πρόληψη και αντιμετώπιση επαγγελματικών κινδύνων. Διαθέτει ιατρεία, οδοντιατρείο και φυσικοθεραπευτήριο.',
+                    children:[
+                        {id:'ygyps-clinic',name:'Ιατρείο',type:'department',icon:'stethoscope',location:'Αθήνα'},
+                        {id:'ygyps-dental',name:'Οδοντιατρείο',type:'department',icon:'tooth',location:'Αθήνα'},
+                        {id:'ygyps-physio',name:'Φυσικοθεραπευτήριο',type:'department',icon:'running',location:'Αθήνα'},
+                        {id:'ygyps-psych',name:'Ψυχολογική Υποστήριξη',type:'department',icon:'brain',location:'Αθήνα'}
+                    ]
+                },
+                {
+                    id:'daee',
+                    name:'Διεύθυνση Αντιμετώπισης Εγκλημάτων Εμπρησμού',
+                    acronym:'Δ.Α.Ε.Ε.',
+                    type:'arson',
+                    icon:'fire',
+                    location:'Αθήνα',
+                    description:'Εξειδικευμένη υπηρεσία για την έρευνα και εξιχνίαση εγκλημάτων εμπρησμού. Συνεργάζεται στενά με άλλες αρχές (Αστυνομία, Εισαγγελία) για τη διερεύνηση ύποπτων περιστατικών.',
+                    children:[
+                        {id:'daee-investigation',name:'Τμήμα Ερευνών',type:'department',icon:'search',location:'Αθήνα'},
+                        {id:'daee-lab',name:'Εργαστήριο Ανάλυσης',type:'department',icon:'flask',location:'Αθήνα'},
+                        {id:'daee-archive',name:'Αρχείο Υποθέσεων',type:'department',icon:'folder-open',location:'Αθήνα'}
+                    ]
+                },
+                {
+                    id:'eskedik',
+                    name:'Εθνικό Συντονιστικό Κέντρο Επιχειρήσεων και Διαχείρισης Κρίσεων',
+                    acronym:'Ε.Σ.Κ.Ε.ΔΙ.Κ.',
+                    type:'center',
+                    icon:'satellite-dish',
+                    location:'Αθήνα',
+                    description:'Κέντρο επιχειρήσεων που συντονίζει δράσεις σε μεγάλες πυρκαγιές, φυσικές καταστροφές και κρίσεις. Λειτουργεί 24/7 και διαθέτει προηγμένα συστήματα επικοινωνίας και πληροφορικής.',
+                    children:[
+                        {id:'eskedik-ops',name:'Αίθουσα Επιχειρήσεων',type:'department',icon:'headset',location:'Αθήνα'},
+                        {id:'eskedik-comms',name:'Κέντρο Επικοινωνιών',type:'department',icon:'broadcast-tower',location:'Αθήνα'},
+                        {id:'eskedik-data',name:'Τμήμα Δεδομένων',type:'department',icon:'database',location:'Αθήνα'}
+                    ]
+                },
+                {
+                    id:'yemps',
+                    name:'Υπηρεσία Εναερίων Μέσων Πυροσβεστικού Σώματος',
+                    acronym:'Υ.Ε.Μ.Π.Σ.',
+                    type:'aerial',
+                    icon:'helicopter',
+                    location:'Αθήνα',
+                    description:'Διαχειρίζεται τα εναέρια μέσα (ελικόπτερα, αεροσκάφη) για πυρόσβεση και μεταφορές. Συντονίζει τις εναέριες επιχειρήσεις και τη συντήρηση του στόλου.',
+                    children:[
+                        {id:'yemps-operations',name:'Τμήμα Επιχειρήσεων',type:'department',icon:'plane-departure',location:'Αθήνα'},
+                        {id:'yemps-maintenance',name:'Τμήμα Συντήρησης',type:'department',icon:'wrench',location:'Αθήνα'},
+                        {id:'yemps-training',name:'Τμήμα Εκπαίδευσης Πληρωμάτων',type:'department',icon:'user-astronaut',location:'Αθήνα'}
+                    ]
+                },
+                {
+                    id:'yplom',
+                    name:'Υπηρεσία Πλωτών Μέσων',
+                    acronym:'Υ.ΠΛΩ.Μ.',
+                    type:'maritime',
+                    icon:'ship',
+                    location:'Πειραιάς',
+                    description:'Χειρίζεται τα πλωτά μέσα για επιχειρήσεις σε θαλάσσιες και λιμναίες περιοχές. Διαθέτει πυροσβεστικά σκάφη και εξειδικευμένα πληρώματα.',
+                    children:[
+                        {id:'yplom-fleet',name:'Στόλος Σκαφών',type:'department',icon:'water',location:'Πειραιάς'},
+                        {id:'yplom-maintenance',name:'Συντήρηση Πλωτών',type:'department',icon:'tools',location:'Πειραιάς'},
+                        {id:'yplom-diving',name:'Ομάδα Δυτών',type:'department',icon:'swimmer',location:'Πειραιάς'}
+                    ]
+                },
+                {
+                    id:'ydipyl',
+                    name:'Υπηρεσία Διαχείρισης Πυροσβεστικού Υλικού',
+                    acronym:'Υ.ΔΙ.Π.ΥΛ.',
+                    type:'logistics',
+                    icon:'boxes',
+                    location:'Αθήνα',
+                    description:'Αρμόδια για την προμήθεια, συντήρηση και διαχείριση του εξοπλισμού και των υλικών του Σώματος. Διασφαλίζει την έγκαιρη διάθεση πόρων σε όλες τις υπηρεσίες.',
+                    children:[
+                        {id:'ydipyl-procurement',name:'Τμήμα Προμηθειών',type:'department',icon:'shopping-cart',location:'Αθήνα'},
+                        {id:'ydipyl-warehouse',name:'Κεντρική Αποθήκη',type:'department',icon:'warehouse',location:'Αθήνα'},
+                        {id:'ydipyl-distribution',name:'Τμήμα Διανομής',type:'department',icon:'truck',location:'Αθήνα'},
+                        {id:'ydipyl-workshop',name:'Συνεργείο Συντήρησης',type:'department',icon:'cogs',location:'Αθήνα'}
+                    ]
+                }
+            ]
+        };
+        
+        const TYPE_LABELS={
+            root:'Κεντρικές Υπηρεσίες',
+            hq:'Αρχηγείο',
+            academy:'Ακαδημία',
+            health:'Υγειονομική Υπηρεσία',
+            arson:'Δ/νση Εμπρησμού',
+            center:'Κέντρο Κρίσεων',
+            aerial:'Εναέρια Μέσα',
+            maritime:'Πλωτά Μέσα',
+            logistics:'Διαχείριση Υλικού',
+            department:'Τμήμα'
+        };
+        
+        const STATUS_LABELS={pending:'Εκκρεμεί','in-progress':'Σε Εξέλιξη',completed:'Ολοκληρώθηκε'};
+        const PRIORITY_LABELS={low:'Χαμηλή',medium:'Μεσαία',high:'Υψηλή'};
+        
+        let currentUnitId='root';
+        let taskToDelete=null;
+        
+        function getTasks(){return JSON.parse(localStorage.getItem('ps_central_tasks')||'[]');}
+        function saveTasks(tasks){localStorage.setItem('ps_central_tasks',JSON.stringify(tasks));}
+        function generateId(){return'task_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
+        function findUnit(node,id){if(node.id===id)return node;if(node.children){for(let child of node.children){const found=findUnit(child,id);if(found)return found;}}return null;}
+        function getUnitPath(node,id,path=[]){path.push({id:node.id,name:node.name});if(node.id===id)return path;if(node.children){for(let child of node.children){const result=getUnitPath(child,id,[...path]);if(result)return result;}}return null;}
+        function getAllChildIds(node){let ids=[node.id];if(node.children){node.children.forEach(child=>{ids=ids.concat(getAllChildIds(child));});}return ids;}
+        function getUnitStats(unitId){const unit=findUnit(ORG_DATA,unitId);const unitIds=unit?getAllChildIds(unit):[unitId];const tasks=getTasks().filter(t=>unitIds.includes(t.unitId));const now=new Date();return{pending:tasks.filter(t=>t.status==='pending').length,inProgress:tasks.filter(t=>t.status==='in-progress').length,completed:tasks.filter(t=>t.status==='completed').length,overdue:tasks.filter(t=>t.deadline&&t.status!=='completed'&&new Date(t.deadline)<now).length};}
+        
+        function buildOrgTree(node,container){const item=document.createElement('div');item.className='org-item';item.dataset.id=node.id;const hasChildren=node.children&&node.children.length>0;const stats=getUnitStats(node.id);const pending=stats.pending+stats.inProgress;const header=document.createElement('div');header.className='org-header';header.innerHTML=`<span class="org-toggle ${hasChildren?'':'hidden'}"><i class="fas fa-chevron-right"></i></span><span class="org-icon ${node.type}"><i class="fas fa-${node.icon}"></i></span><span class="org-name" title="${node.name}">${node.acronym||node.name}</span>${pending>0?`<span class="org-badge">${pending}</span>`:''}`;header.addEventListener('click',e=>{if(hasChildren&&e.target.closest('.org-toggle')){const toggle=header.querySelector('.org-toggle');const children=item.querySelector('.org-children');toggle.classList.toggle('expanded');children.classList.toggle('expanded');}else{loadUnit(node.id);}});item.appendChild(header);if(hasChildren){const children=document.createElement('div');children.className='org-children';node.children.forEach(child=>buildOrgTree(child,children));item.appendChild(children);}container.appendChild(item);}
+
+        function loadUnit(unitId){currentUnitId=unitId;const unit=findUnit(ORG_DATA,unitId);if(!unit)return;document.getElementById('unitTitle').textContent=unit.name;document.getElementById('unitType').textContent=TYPE_LABELS[unit.type]||unit.type;const acronymDiv=document.getElementById('unitAcronym');if(unit.acronym){acronymDiv.textContent=unit.acronym;acronymDiv.style.display='block';}else{acronymDiv.style.display='none';}const locationDiv=document.getElementById('unitLocation');if(unit.location){document.getElementById('locationText').textContent=unit.location;locationDiv.style.display='flex';}else{locationDiv.style.display='none';}const descDiv=document.getElementById('unitDesc');if(unit.description){descDiv.textContent=unit.description;descDiv.style.display='block';}else{descDiv.style.display='none';}const path=getUnitPath(ORG_DATA,unitId);document.getElementById('breadcrumb').innerHTML=path.map(p=>`<a href="#" onclick="loadUnit('${p.id}');return false;">${p.name}</a>`).join('');const stats=getUnitStats(unitId);document.getElementById('sPending').textContent=stats.pending;document.getElementById('sProgress').textContent=stats.inProgress;document.getElementById('sCompleted').textContent=stats.completed;document.getElementById('sOverdue').textContent=stats.overdue;loadSubunits(unit);renderTasks();document.querySelectorAll('.org-header').forEach(h=>h.classList.remove('active'));const activeHeader=document.querySelector(`[data-id="${unitId}"] > .org-header`);if(activeHeader)activeHeader.classList.add('active');expandToUnit(unitId);if(window.innerWidth<1024)closeSidebar();}
+
+        function loadSubunits(unit){const section=document.getElementById('subunitsSection');const grid=document.getElementById('subunitsGrid');if(!unit.children||unit.children.length===0){section.style.display='none';return;}section.style.display='block';grid.innerHTML='';unit.children.forEach(child=>{const stats=getUnitStats(child.id);const card=document.createElement('div');card.className='subunit-card';card.onclick=()=>loadUnit(child.id);card.innerHTML=`<div class="subunit-header"><span class="subunit-name"><i class="fas fa-${child.icon}" style="margin-right:0.5rem;"></i>${child.name}</span><span class="subunit-type">${TYPE_LABELS[child.type]||child.type}</span></div>${child.location?`<div style="font-size:0.8rem;color:var(--gray-600);margin-bottom:0.5rem;"><i class="fas fa-map-marker-alt"></i> ${child.location}</div>`:''}<div class="subunit-stats"><span class="subunit-stat p"><i class="fas fa-clock"></i> ${stats.pending}</span><span class="subunit-stat i"><i class="fas fa-spinner"></i> ${stats.inProgress}</span><span class="subunit-stat c"><i class="fas fa-check"></i> ${stats.completed}</span></div>`;grid.appendChild(card);});}
+
+        function renderTasks(){const tasks=getTasks().filter(t=>t.unitId===currentUnitId);const statusFilter=document.getElementById('filterStatus').value;const priorityFilter=document.getElementById('filterPriority').value;let filtered=tasks;if(statusFilter)filtered=filtered.filter(t=>t.status===statusFilter);if(priorityFilter)filtered=filtered.filter(t=>t.priority===priorityFilter);filtered.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));const container=document.getElementById('tasksList');if(filtered.length===0){container.innerHTML='<div class="empty-state"><i class="fas fa-clipboard-list"></i><p>Δεν υπάρχουν εκκρεμότητες</p></div>';return;}container.innerHTML=filtered.map(task=>{const now=new Date();const isOverdue=task.deadline&&task.status!=='completed'&&new Date(task.deadline)<now;const deadlineText=task.deadline?new Date(task.deadline).toLocaleDateString('el-GR'):'';return `<div class="task-item ${task.priority} ${task.status==='completed'?'done':''}" data-id="${task.id}"><div class="task-checkbox"><input type="checkbox" ${task.status==='completed'?'checked':''} onchange="toggleTask('${task.id}')"></div><div class="task-content"><div class="task-title" onclick="showDetail('${task.id}')">${task.title}</div><div class="task-meta"><span class="status-badge ${task.status}">${STATUS_LABELS[task.status]}</span><span><i class="fas fa-flag"></i> ${PRIORITY_LABELS[task.priority]}</span>${task.deadline?`<span class="${isOverdue?'overdue':''}"><i class="fas fa-calendar"></i> ${deadlineText}${isOverdue?' (!)':''}</span>`:''}${task.assignee?`<span><i class="fas fa-user"></i> ${task.assignee}</span>`:''}</div></div><div class="task-actions"><button onclick="editTask('${task.id}')" title="Επεξεργασία"><i class="fas fa-edit"></i></button><button class="del" onclick="confirmDelete('${task.id}')" title="Διαγραφή"><i class="fas fa-trash"></i></button></div></div>`;}).join('');}
+
+        function expandToUnit(unitId){const path=getUnitPath(ORG_DATA,unitId);if(!path)return;path.forEach(p=>{const item=document.querySelector(`.org-item[data-id="${p.id}"]`);if(item){const toggle=item.querySelector(':scope > .org-header .org-toggle');const children=item.querySelector(':scope > .org-children');if(toggle)toggle.classList.add('expanded');if(children)children.classList.add('expanded');}});}
+
+        function refreshTree(){document.getElementById('orgTree').innerHTML='';buildOrgTree(ORG_DATA,document.getElementById('orgTree'));}
+        function toggleTask(id){const tasks=getTasks();const task=tasks.find(t=>t.id===id);if(task){task.status=task.status==='completed'?'pending':'completed';task.updatedAt=new Date().toISOString();saveTasks(tasks);renderTasks();loadUnit(currentUnitId);refreshTree();showToast('Η κατάσταση ενημερώθηκε','success');}}
+        function openAddModal(){document.getElementById('modalTitle').textContent='Νέα Εκκρεμότητα';document.getElementById('taskForm').reset();document.getElementById('taskId').value='';openModal('taskModal');}
+        function editTask(id){const task=getTasks().find(t=>t.id===id);if(!task)return;document.getElementById('modalTitle').textContent='Επεξεργασία';document.getElementById('taskId').value=task.id;document.getElementById('taskTitle').value=task.title;document.getElementById('taskDesc').value=task.description||'';document.getElementById('taskPriority').value=task.priority;document.getElementById('taskStatus').value=task.status;document.getElementById('taskDeadline').value=task.deadline||'';document.getElementById('taskAssignee').value=task.assignee||'';openModal('taskModal');}
+        function saveTask(e){e.preventDefault();const tasks=getTasks();const id=document.getElementById('taskId').value;const taskData={id:id||generateId(),unitId:currentUnitId,title:document.getElementById('taskTitle').value.trim(),description:document.getElementById('taskDesc').value.trim(),priority:document.getElementById('taskPriority').value,status:document.getElementById('taskStatus').value,deadline:document.getElementById('taskDeadline').value||null,assignee:document.getElementById('taskAssignee').value.trim(),updatedAt:new Date().toISOString()};if(id){const index=tasks.findIndex(t=>t.id===id);if(index!==-1){taskData.createdAt=tasks[index].createdAt;tasks[index]=taskData;}}else{taskData.createdAt=new Date().toISOString();tasks.push(taskData);}saveTasks(tasks);closeModal('taskModal');renderTasks();loadUnit(currentUnitId);refreshTree();showToast(id?'Ενημερώθηκε':'Δημιουργήθηκε','success');}
+        function confirmDelete(id){taskToDelete=id;openModal('deleteModal');}
+        function deleteTask(){if(!taskToDelete)return;let tasks=getTasks();tasks=tasks.filter(t=>t.id!==taskToDelete);saveTasks(tasks);closeModal('deleteModal');taskToDelete=null;renderTasks();loadUnit(currentUnitId);refreshTree();showToast('Διαγράφηκε','success');}
+        function showDetail(id){const task=getTasks().find(t=>t.id===id);if(!task)return;const unit=findUnit(ORG_DATA,task.unitId);const isOverdue=task.deadline&&task.status!=='completed'&&new Date(task.deadline)<new Date();document.getElementById('detailContent').innerHTML=`<h3 style="color:var(--primary);margin-bottom:1rem;">${task.title}</h3><div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;"><span class="status-badge ${task.status}">${STATUS_LABELS[task.status]}</span><span class="status-badge" style="background:${task.priority==='high'?'#f8d7da':task.priority==='medium'?'#fff3cd':'#d4edda'};">${PRIORITY_LABELS[task.priority]}</span>${isOverdue?'<span class="status-badge" style="background:#f8d7da;color:#721c24;">Εκπρόθεσμο</span>':''}</div>${task.description?`<div class="detail-section"><h4>Περιγραφή</h4><p>${task.description}</p></div>`:''}<div class="detail-grid"><div class="detail-section"><h4>Μονάδα</h4><p>${unit?unit.name:'-'}${unit&&unit.acronym?' ('+unit.acronym+')':''}</p></div>${task.assignee?`<div class="detail-section"><h4>Υπεύθυνος</h4><p>${task.assignee}</p></div>`:''}${task.deadline?`<div class="detail-section"><h4>Προθεσμία</h4><p>${new Date(task.deadline).toLocaleDateString('el-GR')}</p></div>`:''}<div class="detail-section"><h4>Δημιουργήθηκε</h4><p>${new Date(task.createdAt).toLocaleDateString('el-GR')}</p></div><div class="detail-section"><h4>Τελ. Ενημέρωση</h4><p>${new Date(task.updatedAt).toLocaleDateString('el-GR')}</p></div></div><div class="form-actions"><button class="btn btn-secondary" data-close="detailModal">Κλείσιμο</button><button class="btn btn-primary" onclick="editTask('${task.id}');closeModal('detailModal');"><i class="fas fa-edit"></i> Επεξεργασία</button></div>`;openModal('detailModal');}
+        function showStats(){const tasks=getTasks();const now=new Date();const total=tasks.length;const pending=tasks.filter(t=>t.status==='pending').length;const inProgress=tasks.filter(t=>t.status==='in-progress').length;const completed=tasks.filter(t=>t.status==='completed').length;const overdue=tasks.filter(t=>t.deadline&&t.status!=='completed'&&new Date(t.deadline)<now).length;const byUnit={};tasks.forEach(t=>{const unit=findUnit(ORG_DATA,t.unitId);if(unit){byUnit[unit.name]=(byUnit[unit.name]||0)+1;}});document.getElementById('statsContent').innerHTML=`<div class="stats-grid" style="margin-bottom:2rem;"><div class="stat-box pending"><div><span class="stat-number">${total}</span><span class="stat-label">Σύνολο</span></div></div><div class="stat-box pending"><div><span class="stat-number">${pending}</span><span class="stat-label">Εκκρεμούν</span></div></div><div class="stat-box progress"><div><span class="stat-number">${inProgress}</span><span class="stat-label">Σε Εξέλιξη</span></div></div><div class="stat-box completed"><div><span class="stat-number">${completed}</span><span class="stat-label">Ολοκληρώθηκαν</span></div></div><div class="stat-box overdue"><div><span class="stat-number">${overdue}</span><span class="stat-label">Εκπρόθεσμα</span></div></div></div><h4 style="margin-bottom:1rem;">Μονάδες με τις περισσότερες εκκρεμότητες</h4><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:var(--gray-100);"><th style="padding:0.5rem;text-align:left;border-bottom:1px solid var(--gray-300);">Μονάδα</th><th style="padding:0.5rem;text-align:right;border-bottom:1px solid var(--gray-300);">Πλήθος</th></tr></thead><tbody>${Object.entries(byUnit).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([name,count])=>`<tr><td style="padding:0.5rem;border-bottom:1px solid var(--gray-200);font-size:0.9rem;">${name}</td><td style="padding:0.5rem;text-align:right;border-bottom:1px solid var(--gray-200);">${count}</td></tr>`).join('')}</tbody></table>`;openModal('statsModal');}
+        function exportData(){const data={exportDate:new Date().toISOString(),type:'Κεντρικές Υπηρεσίες',tasks:getTasks()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ps_kentrikes_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(url);showToast('Εξαγωγή ολοκληρώθηκε','success');}
+        function openModal(id){document.getElementById(id).classList.add('active');}
+        function closeModal(id){document.getElementById(id).classList.remove('active');}
+        function showToast(msg,type='info'){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=`<i class="fas fa-${type==='success'?'check':type==='error'?'times':'info'}-circle"></i> ${msg}`;c.appendChild(t);setTimeout(()=>t.remove(),3000);}
+        function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('active');}
+        function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('active');}
+        function setupInstallPrompt(){const banner=document.getElementById('installBanner');const btn=document.getElementById('installBtn');const dismiss=document.getElementById('installDismiss');let deferredPrompt=null;const hideBanner=()=>banner.classList.remove('show');window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;banner.classList.add('show');});window.addEventListener('appinstalled',()=>{hideBanner();showToast('Η εφαρμογή εγκαταστάθηκε','success');deferredPrompt=null;});btn.addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();const {outcome}=await deferredPrompt.userChoice;deferredPrompt=null;if(outcome==='accepted'){showToast('Η εγκατάσταση ξεκίνησε','success');}else{showToast('Η εγκατάσταση ακυρώθηκε','warning');}hideBanner();});dismiss.addEventListener('click',hideBanner);if(window.matchMedia('(display-mode: standalone)').matches){hideBanner();}}
+        function registerServiceWorker(){if(!('serviceWorker' in navigator))return;const offlineUrl=JSON.stringify(window.location.href);const swCode=`const CACHE_NAME='ps-central-pwa-v1';const OFFLINE_URL=${offlineUrl};self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll([OFFLINE_URL])));self.skipWaiting();});self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))));self.clients.claim();});self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).catch(()=>caches.match(OFFLINE_URL)));return;}event.respondWith(caches.match(event.request).then(response=>response||fetch(event.request).then(networkResponse=>{const copy=networkResponse.clone();caches.open(CACHE_NAME).then(cache=>cache.put(event.request,copy));return networkResponse;}).catch(()=>caches.match(OFFLINE_URL))));});`;const swBlob=new Blob([swCode],{type:'application/javascript'});const swUrl=URL.createObjectURL(swBlob);navigator.serviceWorker.register(swUrl).catch(err=>console.error('Service worker registration failed:',err));}
+        document.addEventListener('DOMContentLoaded',()=>{buildOrgTree(ORG_DATA,document.getElementById('orgTree'));loadUnit('root');document.getElementById('menuBtn').addEventListener('click',openSidebar);document.getElementById('sidebarClose').addEventListener('click',closeSidebar);document.getElementById('overlay').addEventListener('click',closeSidebar);document.getElementById('addTaskBtn').addEventListener('click',openAddModal);document.getElementById('taskForm').addEventListener('submit',saveTask);document.getElementById('confirmDelete').addEventListener('click',deleteTask);document.getElementById('statsBtn').addEventListener('click',showStats);document.getElementById('exportBtn').addEventListener('click',exportData);document.getElementById('filterStatus').addEventListener('change',renderTasks);document.getElementById('filterPriority').addEventListener('change',renderTasks);document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeModal(btn.dataset.close)));document.getElementById('searchTree').addEventListener('input',e=>{const query=e.target.value.toLowerCase();document.querySelectorAll('.org-item').forEach(item=>{const name=item.querySelector('.org-name').textContent.toLowerCase();item.style.display=name.includes(query)?'':'none';});});document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal.active').forEach(m=>m.classList.remove('active'));}});setupInstallPrompt();registerServiceWorker();});
+        window.loadUnit=loadUnit;window.toggleTask=toggleTask;window.editTask=editTask;window.confirmDelete=confirmDelete;window.showDetail=showDetail;window.closeModal=closeModal;
+    </script>
+</body>
+</html>

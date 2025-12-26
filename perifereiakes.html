@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1565c0">
+    <meta name="description" content="Εφαρμογή Παρακολούθησης Εκκρεμοτήτων - Περιφερειακές Υπηρεσίες Π.Σ.">
+    <title>Περιφερειακές Υπηρεσίες Π.Σ. - Εκκρεμότητες</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231565c0'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='white'>PY</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1565c0;
+            --primary-dark: #0d47a1;
+            --secondary: #c41e3a;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray-50: #f8fbff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --header-height: 60px;
+            --sidebar-width: 320px;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--gray-100);color:var(--gray-800);line-height:1.5}
+        .header{position:fixed;top:0;left:0;right:0;height:var(--header-height);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;padding:0 1rem;z-index:1000;box-shadow:var(--shadow-lg)}
+        .menu-btn{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:0.5rem;margin-right:1rem;border-radius:4px}
+        .menu-btn:hover{background:rgba(255,255,255,0.1)}
+        .header-title{display:flex;align-items:center;gap:0.75rem;flex:1}
+        .logo{width:40px;height:40px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary);font-size:0.85rem}
+        .header h1{font-size:1.1rem;font-weight:600}
+        .header-subtitle{font-size:0.75rem;opacity:0.9}
+        .header-actions{display:flex;gap:0.5rem}
+        .icon-btn{background:rgba(255,255,255,0.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem}
+        .icon-btn:hover{background:rgba(255,255,255,0.2)}
+        .sidebar{position:fixed;top:var(--header-height);left:0;width:var(--sidebar-width);height:calc(100vh - var(--header-height));background:#fff;box-shadow:var(--shadow-lg);z-index:999;transform:translateX(-100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+        .sidebar.open{transform:translateX(0)}
+        .sidebar-header{padding:1rem;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;background:var(--gray-50)}
+        .sidebar-header h2{font-size:1rem;color:var(--primary)}
+        .sidebar-close{background:none;border:none;font-size:1.25rem;color:var(--gray-600);cursor:pointer}
+        .sidebar-search{padding:0.75rem 1rem;border-bottom:1px solid var(--gray-200)}
+        .sidebar-search input{width:100%;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.9rem}
+        .sidebar-search input:focus{outline:none;border-color:var(--primary)}
+        .org-tree{flex:1;overflow-y:auto;padding:0.5rem 0}
+        .org-item{border-bottom:1px solid var(--gray-100)}
+        .org-header{display:flex;align-items:center;padding:0.6rem 1rem;cursor:pointer;gap:0.5rem;transition:background 0.2s}
+        .org-header:hover{background:var(--gray-100)}
+        .org-header.active{background:rgba(21,101,192,0.1);color:var(--primary);font-weight:500}
+        .org-toggle{width:18px;font-size:0.7rem;color:var(--gray-500);transition:transform 0.2s}
+        .org-toggle.expanded{transform:rotate(90deg)}
+        .org-toggle.hidden{visibility:hidden}
+        .org-icon{font-size:0.9rem;width:20px;text-align:center}
+        .org-icon.inspector{color:var(--secondary)}
+        .org-icon.coordinator{color:#6f42c1}
+        .org-icon.region{color:var(--primary)}
+        .org-icon.prefecture{color:var(--info)}
+        .org-icon.unit{color:var(--warning)}
+        .org-icon.emak{color:var(--danger)}
+        .org-icon.emode{color:#ff7b00}
+        .org-name{flex:1;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .org-badge{background:var(--danger);color:#fff;font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:10px;min-width:18px;text-align:center}
+        .org-children{display:none;padding-left:1.25rem;background:var(--gray-50)}
+        .org-children.expanded{display:block}
+        .overlay{position:fixed;top:var(--header-height);left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:998;opacity:0;visibility:hidden;transition:opacity 0.3s}
+        .overlay.active{opacity:1;visibility:visible}
+        .main{margin-top:var(--header-height);padding:1.5rem;min-height:calc(100vh - var(--header-height))}
+        @media(min-width:1024px){
+            .sidebar{transform:translateX(0)}
+            .main{margin-left:var(--sidebar-width)}
+            .overlay{display:none}
+            .sidebar-close{display:none}
+        }
+        .breadcrumb{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem;font-size:0.85rem}
+        .breadcrumb a{color:var(--gray-600);text-decoration:none}
+        .breadcrumb a:hover{color:var(--primary)}
+        .breadcrumb a:not(:last-child)::after{content:'/';margin-left:0.5rem;color:var(--gray-400)}
+        .breadcrumb a:last-child{color:var(--primary);font-weight:500}
+        .unit-card{background:#fff;border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow)}
+        .unit-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+        .unit-title{font-size:1.4rem;color:var(--primary)}
+        .unit-type{background:var(--primary);color:#fff;padding:0.3rem 0.75rem;border-radius:var(--radius);font-size:0.8rem}
+        .unit-location{display:flex;align-items:center;gap:0.5rem;color:var(--gray-600);font-size:0.9rem;margin-top:0.5rem}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem}
+        .stat-box{display:flex;align-items:center;gap:1rem;padding:1rem;border-radius:var(--radius)}
+        .stat-box i{font-size:1.5rem}
+        .stat-box.pending{background:#fff3cd}
+        .stat-box.pending i{color:var(--warning)}
+        .stat-box.progress{background:#cce5ff}
+        .stat-box.progress i{color:var(--info)}
+        .stat-box.completed{background:#d4edda}
+        .stat-box.completed i{color:var(--success)}
+        .stat-box.overdue{background:#f8d7da}
+        .stat-box.overdue i{color:var(--danger)}
+        .stat-number{font-size:1.5rem;font-weight:700;display:block}
+        .stat-label{font-size:0.75rem;color:var(--gray-600)}
+        .subunits-section{margin-bottom:1.5rem}
+        .section-title{display:flex;align-items:center;gap:0.5rem;font-size:1.1rem;color:var(--primary);margin-bottom:1rem}
+        .subunits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+        .subunit-card{background:#fff;border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow);cursor:pointer;border-left:4px solid var(--primary);transition:transform 0.2s,box-shadow 0.2s}
+        .subunit-card.emak{border-left-color:var(--danger)}
+        .subunit-card.emode{border-left-color:var(--warning)}
+        .subunit-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+        .subunit-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem}
+        .subunit-name{font-weight:600;color:var(--primary);font-size:0.9rem}
+        .subunit-type{font-size:0.7rem;background:var(--gray-200);padding:0.15rem 0.4rem;border-radius:4px;color:var(--gray-600)}
+        .subunit-stats{display:flex;gap:1rem;font-size:0.8rem}
+        .subunit-stat{display:flex;align-items:center;gap:0.25rem}
+        .subunit-stat.p{color:var(--warning)}
+        .subunit-stat.i{color:var(--info)}
+        .subunit-stat.c{color:var(--success)}
+        .tasks-section{background:#fff;border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow)}
+        .tasks-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+        .tasks-actions{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center}
+        .filter-select{padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.85rem;background:#fff}
+        .filter-select:focus{outline:none;border-color:var(--primary)}
+        .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;border:none;border-radius:var(--radius);font-size:0.9rem;font-weight:500;cursor:pointer;transition:background 0.2s}
+        .btn-primary{background:var(--primary);color:#fff}
+        .btn-primary:hover{background:var(--primary-dark)}
+        .btn-secondary{background:var(--gray-200);color:var(--gray-700)}
+        .btn-secondary:hover{background:var(--gray-300)}
+        .btn-danger{background:var(--danger);color:#fff}
+        .tasks-list{display:flex;flex-direction:column;gap:0.75rem}
+        .task-item{display:flex;gap:1rem;padding:1rem;background:var(--gray-50);border-radius:var(--radius);border-left:4px solid var(--gray-400);transition:background 0.2s}
+        .task-item:hover{background:var(--gray-100)}
+        .task-item.high{border-left-color:var(--danger)}
+        .task-item.medium{border-left-color:var(--warning)}
+        .task-item.low{border-left-color:var(--success)}
+        .task-item.done{opacity:0.6}
+        .task-checkbox input{width:20px;height:20px;cursor:pointer;accent-color:var(--primary)}
+        .task-content{flex:1;min-width:0}
+        .task-title{font-weight:600;color:var(--gray-800);margin-bottom:0.25rem;cursor:pointer}
+        .task-title:hover{color:var(--primary)}
+        .done .task-title{text-decoration:line-through;color:var(--gray-500)}
+        .task-meta{display:flex;flex-wrap:wrap;gap:0.75rem;font-size:0.8rem;color:var(--gray-600)}
+        .task-meta span{display:flex;align-items:center;gap:0.25rem}
+        .task-meta .overdue{color:var(--danger);font-weight:500}
+        .status-badge{padding:0.15rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:500}
+        .status-badge.pending{background:#fff3cd;color:#856404}
+        .status-badge.in-progress{background:#cce5ff;color:#004085}
+        .status-badge.completed{background:#d4edda;color:#155724}
+        .task-actions{display:flex;gap:0.25rem}
+        .task-actions button{background:none;border:none;padding:0.5rem;cursor:pointer;color:var(--gray-500);border-radius:4px}
+        .task-actions button:hover{background:var(--gray-200);color:var(--gray-700)}
+        .task-actions button.del:hover{background:#f8d7da;color:var(--danger)}
+        .empty-state{text-align:center;padding:3rem 1rem;color:var(--gray-500)}
+        .empty-state i{font-size:3rem;margin-bottom:1rem;opacity:0.5}
+        .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:opacity 0.3s;padding:1rem}
+        .modal.active{opacity:1;visibility:visible}
+        .modal-content{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;transform:scale(0.9);transition:transform 0.3s}
+        .modal.active .modal-content{transform:scale(1)}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid var(--gray-200)}
+        .modal-header h2{font-size:1.2rem;color:var(--primary)}
+        .modal-close{background:none;border:none;font-size:1.5rem;color:var(--gray-500);cursor:pointer}
+        .modal-body{padding:1.5rem}
+        .form-group{margin-bottom:1rem}
+        .form-group label{display:block;margin-bottom:0.35rem;font-weight:500;color:var(--gray-700);font-size:0.9rem}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:0.6rem 0.75rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.95rem;font-family:inherit}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(21,101,192,0.1)}
+        .form-row{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+        @media(max-width:480px){.form-row{grid-template-columns:1fr}}
+        .form-actions{display:flex;justify-content:flex-end;gap:0.75rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--gray-200)}
+        .toast-container{position:fixed;bottom:1rem;right:1rem;z-index:3000}
+        .toast{background:var(--gray-800);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius);margin-top:0.5rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:0.75rem;animation:slideIn 0.3s ease}
+        .toast.success{background:var(--success)}
+        .toast.error{background:var(--danger)}
+        .toast.warning{background:var(--warning);color:var(--gray-800)}
+        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @media(max-width:768px){
+            .header h1{font-size:1rem}
+            .header-subtitle{display:none}
+            .unit-title{font-size:1.2rem}
+            .tasks-header{flex-direction:column}
+            .tasks-actions{width:100%}
+            .filter-select{flex:1}
+            .task-item{flex-direction:column}
+            .task-actions{justify-content:flex-end}
+        }
+        .detail-section{margin-bottom:1rem}
+        .detail-section h4{font-size:0.8rem;color:var(--gray-600);margin-bottom:0.25rem;text-transform:uppercase}
+        .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+        .install-banner{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--gray-200);box-shadow:0 -4px 16px rgba(0,0,0,0.15);padding:1rem;transform:translateY(100%);transition:transform 0.3s ease;z-index:1500}
+        .install-banner.show{transform:translateY(0)}
+        .install-content{display:flex;justify-content:space-between;align-items:center;gap:1rem;max-width:900px;margin:0 auto;flex-wrap:wrap}
+        .install-content p{font-size:0.85rem;color:var(--gray-600)}
+        .install-actions{display:flex;gap:0.5rem;flex-wrap:wrap}
+        @media(max-width:600px){.install-content{flex-direction:column;align-items:flex-start}}
+    </style>
+    <script>
+        (function() {
+            const path = window.location.pathname || '/';
+            const scope = path.endsWith('/') ? path : path.substring(0, path.lastIndexOf('/') + 1) || '/';
+            const iconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='#1565c0'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='#ffffff'>PY</text></svg>";
+            const iconData = 'data:image/svg+xml;base64,' + btoa(iconSvg);
+            const manifestData = {
+                name: 'Περιφερειακές Υπηρεσίες Π.Σ.',
+                short_name: 'ΠΥ Π.Σ.',
+                start_url: path,
+                scope: scope,
+                display: 'standalone',
+                background_color: '#f8f9fa',
+                theme_color: '#1565c0',
+                icons: [
+                    { src: iconData, sizes: '192x192', type: 'image/svg+xml' },
+                    { src: iconData, sizes: '512x512', type: 'image/svg+xml' }
+                ]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = manifestURL;
+            document.head.appendChild(manifestLink);
+        })();
+    </script>
+</head>
+<body>
+    <header class="header">
+        <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+        <div class="header-title">
+            <div class="logo">PY</div>
+            <div>
+                <h1>Περιφερειακές Υπηρεσίες Π.Σ.</h1>
+                <span class="header-subtitle">Παρακολούθηση Εκκρεμοτήτων</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="statsBtn" title="Στατιστικά"><i class="fas fa-chart-bar"></i></button>
+            <button class="icon-btn" id="exportBtn" title="Εξαγωγή"><i class="fas fa-download"></i></button>
+        </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-map-marked-alt"></i> Περιφέρειες</h2>
+            <button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sidebar-search">
+            <input type="text" id="searchTree" placeholder="Αναζήτηση...">
+        </div>
+        <nav class="org-tree" id="orgTree"></nav>
+    </aside>
+
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main" id="main">
+        <nav class="breadcrumb" id="breadcrumb"></nav>
+
+        <div class="unit-card">
+            <div class="unit-header">
+                <div>
+                    <h2 class="unit-title" id="unitTitle">Περιφερειακές Υπηρεσίες Π.Σ.</h2>
+                    <div class="unit-location" id="unitLocation" style="display:none;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="locationText"></span>
+                    </div>
+                </div>
+                <span class="unit-type" id="unitType">Κεντρική</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box pending">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <span class="stat-number" id="sPending">0</span>
+                        <span class="stat-label">Εκκρεμούν</span>
+                    </div>
+                </div>
+                <div class="stat-box progress">
+                    <i class="fas fa-spinner"></i>
+                    <div>
+                        <span class="stat-number" id="sProgress">0</span>
+                        <span class="stat-label">Σε Εξέλιξη</span>
+                    </div>
+                </div>
+                <div class="stat-box completed">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <span class="stat-number" id="sCompleted">0</span>
+                        <span class="stat-label">Ολοκληρώθηκαν</span>
+                    </div>
+                </div>
+                <div class="stat-box overdue">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <span class="stat-number" id="sOverdue">0</span>
+                        <span class="stat-label">Εκπρόθεσμα</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="subunits-section" id="subunitsSection">
+            <h3 class="section-title"><i class="fas fa-sitemap"></i> Υποκείμενες Μονάδες</h3>
+            <div class="subunits-grid" id="subunitsGrid"></div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="tasks-header">
+                <h3 class="section-title"><i class="fas fa-tasks"></i> Εκκρεμότητες</h3>
+                <div class="tasks-actions">
+                    <select class="filter-select" id="filterStatus">
+                        <option value="">Όλες οι καταστάσεις</option>
+                        <option value="pending">Εκκρεμεί</option>
+                        <option value="in-progress">Σε Εξέλιξη</option>
+                        <option value="completed">Ολοκληρώθηκε</option>
+                    </select>
+                    <select class="filter-select" id="filterPriority">
+                        <option value="">Προτεραιότητα</option>
+                        <option value="high">Υψηλή</option>
+                        <option value="medium">Μεσαία</option>
+                        <option value="low">Χαμηλή</option>
+                    </select>
+                    <button class="btn btn-primary" id="addTaskBtn"><i class="fas fa-plus"></i> Νέα</button>
+                </div>
+            </div>
+            <div class="tasks-list" id="tasksList"></div>
+        </div>
+    </main>
+
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Νέα Εκκρεμότητα</h2>
+                <button class="modal-close" data-close="taskModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+                    <div class="form-group">
+                        <label>Τίτλος *</label>
+                        <input type="text" id="taskTitle" required placeholder="Τίτλος εκκρεμότητας">
+                    </div>
+                    <div class="form-group">
+                        <label>Περιγραφή</label>
+                        <textarea id="taskDesc" rows="3" placeholder="Περιγραφή..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Προτεραιότητα</label>
+                            <select id="taskPriority">
+                                <option value="low">Χαμηλή</option>
+                                <option value="medium" selected>Μεσαία</option>
+                                <option value="high">Υψηλή</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Κατάσταση</label>
+                            <select id="taskStatus">
+                                <option value="pending">Εκκρεμεί</option>
+                                <option value="in-progress">Σε Εξέλιξη</option>
+                                <option value="completed">Ολοκληρώθηκε</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Προθεσμία</label>
+                            <input type="date" id="taskDeadline">
+                        </div>
+                        <div class="form-group">
+                            <label>Υπεύθυνος</label>
+                            <input type="text" id="taskAssignee" placeholder="Όνομα">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Κατηγορία</label>
+                        <select id="taskCategory">
+                            <option value="general">Γενικά</option>
+                            <option value="operational">Επιχειρησιακά</option>
+                            <option value="administrative">Διοικητικά</option>
+                            <option value="equipment">Εξοπλισμός</option>
+                            <option value="training">Εκπαίδευση</option>
+                            <option value="personnel">Προσωπικό</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close="taskModal">Ακύρωση</button>
+                        <button type="submit" class="btn btn-primary">Αποθήκευση</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Λεπτομέρειες</h2>
+                <button class="modal-close" data-close="detailModal">&times;</button>
+            </div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content" style="max-width:400px">
+            <div class="modal-header">
+                <h2>Επιβεβαίωση</h2>
+                <button class="modal-close" data-close="deleteModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Διαγραφή αυτής της εκκρεμότητας;</p>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" data-close="deleteModal">Ακύρωση</button>
+                    <button class="btn btn-danger" id="confirmDelete">Διαγραφή</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="statsModal">
+        <div class="modal-content" style="max-width:700px">
+            <div class="modal-header">
+                <h2>Στατιστικά Περιφερειακών Υπηρεσιών</h2>
+                <button class="modal-close" data-close="statsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="statsContent"></div>
+        </div>
+    </div>
+
+    <div class="install-banner" id="installBanner">
+        <div class="install-content">
+            <div>
+                <strong>Εγκαταστήστε την εφαρμογή</strong>
+                <p>Προσθέστε την στις κινητές συσκευές ή το tablet σας για άμεση πρόσβαση, ακόμη και offline.</p>
+            </div>
+            <div class="install-actions">
+                <button class="btn btn-secondary" id="installDismiss">Αργότερα</button>
+                <button class="btn btn-primary" id="installBtn"><i class="fas fa-download"></i> Εγκατάσταση</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const ORG_DATA = {
+            id:'root',
+            name:'Περιφερειακές Υπηρεσίες Π.Σ.',
+            type:'root',
+            icon:'globe-europe',
+            children:[
+                {
+                    id:'north',
+                    name:'Γενικός Επιθεωρητής Βορείου Ελλάδας',
+                    type:'inspector',
+                    icon:'user-tie',
+                    location:'Θεσσαλονίκη',
+                    children:[
+                        {
+                            id:'coord-cmth',
+                            name:'Συντονιστής Κεντρ. Μακεδονίας, Ανατ. Μακεδονίας & Θράκης',
+                            type:'coordinator',
+                            icon:'user-shield',
+                            children:[
+                                {
+                                    id:'pepyd-emt',
+                                    name:'ΠΕ.ΠΥ.Δ. Ανατολικής Μακεδονίας & Θράκης',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Κομοτηνή',
+                                    children:[
+                                        {id:'emak-4',name:'4η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'emode-2',name:'2η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-rodopi',name:'ΔΙ.Π.Υ.Ν. Ροδόπης',type:'prefecture',icon:'building',location:'Κομοτηνή'},
+                                        {id:'dipyn-kavala',name:'ΔΙ.Π.Υ.Ν. Καβάλας',type:'prefecture',icon:'building',location:'Καβάλα'},
+                                        {id:'dipyn-drama',name:'ΔΙ.Π.Υ.Ν. Δράμας',type:'prefecture',icon:'building',location:'Δράμα'},
+                                        {id:'dipyn-xanthi',name:'ΔΙ.Π.Υ.Ν. Ξάνθης',type:'prefecture',icon:'building',location:'Ξάνθη'},
+                                        {id:'dipyn-evros',name:'ΔΙ.Π.Υ.Ν. Έβρου',type:'prefecture',icon:'building',location:'Αλεξανδρούπολη'}
+                                    ]
+                                },
+                                {
+                                    id:'pepyd-cm',
+                                    name:'ΠΕ.ΠΥ.Δ. Κεντρικής Μακεδονίας',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Θεσσαλονίκη',
+                                    children:[
+                                        {id:'emak-2',name:'2η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'emode-4',name:'4η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'workshop-b',name:'Β\' Πυροσβεστικό Συνεργείο',type:'unit',icon:'tools',location:'Θεσσαλονίκη'},
+                                        {id:'dipyn-thess',name:'ΔΙ.Π.Υ.Ν. Θεσσαλονίκης',type:'prefecture',icon:'building',location:'Θεσσαλονίκη'},
+                                        {id:'dipyn-serres',name:'ΔΙ.Π.Υ.Ν. Σερρών',type:'prefecture',icon:'building',location:'Σέρρες'},
+                                        {id:'dipyn-chalkidiki',name:'ΔΙ.Π.Υ.Ν. Χαλκιδικής',type:'prefecture',icon:'building',location:'Πολύγυρος'},
+                                        {id:'dipyn-kilkis',name:'ΔΙ.Π.Υ.Ν. Κιλκίς',type:'prefecture',icon:'building',location:'Κιλκίς'},
+                                        {id:'dipyn-pella',name:'ΔΙ.Π.Υ.Ν. Πέλλας',type:'prefecture',icon:'building',location:'Έδεσσα'},
+                                        {id:'dipyn-imathia',name:'ΔΙ.Π.Υ.Ν. Ημαθίας',type:'prefecture',icon:'building',location:'Βέροια'},
+                                        {id:'dipyn-pieria',name:'ΔΙ.Π.Υ.Ν. Πιερίας',type:'prefecture',icon:'building',location:'Κατερίνη'}
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id:'coord-thess',
+                            name:'Συντονιστής Στερεάς Ελλάδας & Θεσσαλίας',
+                            type:'coordinator',
+                            icon:'user-shield',
+                            children:[
+                                {
+                                    id:'pepyd-thessaly',
+                                    name:'ΠΕ.ΠΥ.Δ. Θεσσαλίας',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Λάρισα',
+                                    children:[
+                                        {id:'emak-8',name:'8η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'emode-10',name:'10η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-larisa',name:'ΔΙ.Π.Υ.Ν. Λάρισας',type:'prefecture',icon:'building',location:'Λάρισα'},
+                                        {id:'dipyn-magnisia',name:'ΔΙ.Π.Υ.Ν. Μαγνησίας',type:'prefecture',icon:'building',location:'Βόλος'},
+                                        {id:'dipyn-trikala',name:'ΔΙ.Π.Υ.Ν. Τρικάλων',type:'prefecture',icon:'building',location:'Τρίκαλα'},
+                                        {id:'dipyn-karditsa',name:'ΔΙ.Π.Υ.Ν. Καρδίτσας',type:'prefecture',icon:'building',location:'Καρδίτσα'}
+                                    ]
+                                },
+                                {
+                                    id:'pepyd-sterea',
+                                    name:'ΠΕ.ΠΥ.Δ. Στερεάς Ελλάδας',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Λαμία',
+                                    children:[
+                                        {id:'emak-7',name:'7η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'emode-5',name:'5η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-fthiotida',name:'ΔΙ.Π.Υ.Ν. Φθιώτιδας',type:'prefecture',icon:'building',location:'Λαμία'},
+                                        {id:'dipyn-evrytania',name:'ΔΙ.Π.Υ.Ν. Ευρυτανίας',type:'prefecture',icon:'building',location:'Καρπενήσι'},
+                                        {id:'dipyn-fokida',name:'ΔΙ.Π.Υ.Ν. Φωκίδας',type:'prefecture',icon:'building',location:'Άμφισσα'},
+                                        {id:'dipyn-voiotia',name:'ΔΙ.Π.Υ.Ν. Βοιωτίας',type:'prefecture',icon:'building',location:'Λιβαδειά'},
+                                        {id:'dipyn-evia',name:'ΔΙ.Π.Υ.Ν. Εύβοιας',type:'prefecture',icon:'building',location:'Χαλκίδα'}
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id:'coord-epirus',
+                            name:'Συντονιστής Ηπείρου, Δυτ. Μακεδονίας & Νήσων',
+                            type:'coordinator',
+                            icon:'user-shield',
+                            children:[
+                                {
+                                    id:'pepyd-wm',
+                                    name:'ΠΕ.ΠΥ.Δ. Δυτικής Μακεδονίας',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Κοζάνη',
+                                    children:[
+                                        {id:'emode-8',name:'8η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-kozani',name:'ΔΙ.Π.Υ.Ν. Κοζάνης',type:'prefecture',icon:'building',location:'Κοζάνη'},
+                                        {id:'mch-florina',name:'Μ.Χ. Φλώρινας',type:'prefecture',icon:'building',location:'Φλώρινα'},
+                                        {id:'dipyn-kastoria',name:'ΔΙ.Π.Υ.Ν. Καστοριάς',type:'prefecture',icon:'building',location:'Καστοριά'},
+                                        {id:'dipyn-grevena',name:'ΔΙ.Π.Υ.Ν. Γρεβενών',type:'prefecture',icon:'building',location:'Γρεβενά'}
+                                    ]
+                                },
+                                {
+                                    id:'pepyd-epirus',
+                                    name:'ΠΕ.ΠΥ.Δ. Ηπείρου',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Ιωάννινα',
+                                    children:[
+                                        {id:'emak-5',name:'5η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'dipyn-ioannina',name:'ΔΙ.Π.Υ.Ν. Ιωαννίνων',type:'prefecture',icon:'building',location:'Ιωάννινα'},
+                                        {id:'dipyn-thesprotia',name:'ΔΙ.Π.Υ.Ν. Θεσπρωτίας',type:'prefecture',icon:'building',location:'Ηγουμενίτσα'},
+                                        {id:'dipyn-preveza',name:'ΔΙ.Π.Υ.Ν. Πρέβεζας',type:'prefecture',icon:'building',location:'Πρέβεζα'},
+                                        {id:'dipyn-arta',name:'ΔΙ.Π.Υ.Ν. Άρτας',type:'prefecture',icon:'building',location:'Άρτα'}
+                                    ]
+                                },
+                                {
+                                    id:'pepyd-ionian',
+                                    name:'ΠΕ.ΠΥ.Δ. Ιονίων Νήσων',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Κέρκυρα',
+                                    children:[
+                                        {id:'emode-15',name:'15η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-corfu',name:'ΔΙ.Π.Υ.Ν. Κέρκυρας',type:'prefecture',icon:'building',location:'Κέρκυρα'},
+                                        {id:'dipyn-lefkada',name:'ΔΙ.Π.Υ.Ν. Λευκάδας',type:'prefecture',icon:'building',location:'Λευκάδα'},
+                                        {id:'dipyn-kefalonia',name:'ΔΙ.Π.Υ.Ν. Κεφαλληνίας',type:'prefecture',icon:'building',location:'Αργοστόλι'},
+                                        {id:'dipyn-zakynthos',name:'ΔΙ.Π.Υ.Ν. Ζακύνθου',type:'prefecture',icon:'building',location:'Ζάκυνθος'}
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id:'south',
+                    name:'Γενικός Επιθεωρητής Νοτίου Ελλάδας',
+                    type:'inspector',
+                    icon:'user-tie',
+                    location:'Αθήνα',
+                    children:[
+                        {
+                            id:'coord-pelop',
+                            name:'Συντονιστής Πελοποννήσου, Δυτ. Ελλάδας & Νήσων',
+                            type:'coordinator',
+                            icon:'user-shield',
+                            children:[
+                                {
+                                    id:'pepyd-west',
+                                    name:'ΠΕ.ΠΥ.Δ. Δυτικής Ελλάδας',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Πάτρα',
+                                    children:[
+                                        {id:'emak-6',name:'6η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'emode-6',name:'6η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-achaia',name:'ΔΙ.Π.Υ.Ν. Αχαΐας',type:'prefecture',icon:'building',location:'Πάτρα'},
+                                        {id:'dipyn-ilia',name:'ΔΙ.Π.Υ.Ν. Ηλείας',type:'prefecture',icon:'building',location:'Πύργος'},
+                                        {id:'dipyn-aitoloakarnania',name:'ΔΙ.Π.Υ.Ν. Αιτωλοακαρνανίας',type:'prefecture',icon:'building',location:'Μεσολόγγι'}
+                                    ]
+                                },
+                                {
+                                    id:'pepyd-pelop',
+                                    name:'ΠΕ.ΠΥ.Δ. Πελοποννήσου',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Τρίπολη',
+                                    children:[
+                                        {id:'emode-9',name:'9η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-arkadia',name:'ΔΙ.Π.Υ.Ν. Αρκαδίας',type:'prefecture',icon:'building',location:'Τρίπολη'},
+                                        {id:'dipyn-lakonia',name:'ΔΙ.Π.Υ.Ν. Λακωνίας',type:'prefecture',icon:'building',location:'Σπάρτη'},
+                                        {id:'dipyn-messinia',name:'ΔΙ.Π.Υ.Ν. Μεσσηνίας',type:'prefecture',icon:'building',location:'Καλαμάτα'},
+                                        {id:'dipyn-argolida',name:'ΔΙ.Π.Υ.Ν. Αργολίδας',type:'prefecture',icon:'building',location:'Ναύπλιο'},
+                                        {id:'dipyn-korinthia',name:'ΔΙ.Π.Υ.Ν. Κορινθίας',type:'prefecture',icon:'building',location:'Κόρινθος'}
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id:'coord-attica',
+                            name:'Συντονιστής Επιχειρήσεων Αττικής',
+                            type:'coordinator',
+                            icon:'user-shield',
+                            children:[
+                                {
+                                    id:'pepyd-attica',
+                                    name:'ΠΕ.ΠΥ.Δ. Αττικής',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Αθήνα',
+                                    children:[
+                                        {id:'emak-1',name:'1η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'metpe',name:'Μ.Ε.Τ.Π.Ε.',type:'emak',icon:'truck'},
+                                        {id:'emode-1',name:'1η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'workshop-a',name:'Α\' Πυροσβεστικό Συνεργείο',type:'unit',icon:'tools',location:'Αθήνα'},
+                                        {id:'dipy-athens',name:'ΔΙ.Π.Υ. Αθηνών',type:'prefecture',icon:'building',location:'Αθήνα'},
+                                        {id:'dipy-piraeus',name:'ΔΙ.Π.Υ. Πειραιά',type:'prefecture',icon:'building',location:'Πειραιάς'},
+                                        {id:'dipy-west-attica',name:'ΔΙ.Π.Υ. Δυτ. Αττικής',type:'prefecture',icon:'building',location:'Ελευσίνα'},
+                                        {id:'dipy-east-attica',name:'ΔΙ.Π.Υ. Ανατ. Αττικής',type:'prefecture',icon:'building',location:'Κρωπία'}
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id:'coord-aegean',
+                            name:'Συντονιστής Βορ., Νοτ. Αιγαίου & Κρήτης',
+                            type:'coordinator',
+                            icon:'user-shield',
+                            children:[
+                                {
+                                    id:'pepyd-north-aegean',
+                                    name:'ΠΕ.ΠΥ.Δ. Βορείου Αιγαίου',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Μυτιλήνη',
+                                    children:[
+                                        {id:'emode-12',name:'12η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-lesvos',name:'ΔΙ.Π.Υ.Ν. Λέσβου',type:'prefecture',icon:'building',location:'Μυτιλήνη'},
+                                        {id:'dipyn-chios',name:'ΔΙ.Π.Υ.Ν. Χίου',type:'prefecture',icon:'building',location:'Χίος'},
+                                        {id:'dipyn-samos',name:'ΔΙ.Π.Υ.Ν. Σάμου',type:'prefecture',icon:'building',location:'Σάμος'}
+                                    ]
+                                },
+                                {
+                                    id:'pepyd-south-aegean',
+                                    name:'ΠΕ.ΠΥ.Δ. Νοτίου Αιγαίου',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Ερμούπολη',
+                                    children:[
+                                        {id:'emode-11',name:'11η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-cyclades',name:'ΔΙ.Π.Υ.Ν. Κυκλάδων',type:'prefecture',icon:'building',location:'Ερμούπολη'},
+                                        {id:'dipyn-dodecanese',name:'ΔΙ.Π.Υ.Ν. Δωδεκανήσου',type:'prefecture',icon:'building',location:'Ρόδος'}
+                                    ]
+                                },
+                                {
+                                    id:'pepyd-crete',
+                                    name:'ΠΕ.ΠΥ.Δ. Κρήτης',
+                                    type:'region',
+                                    icon:'map',
+                                    location:'Ηράκλειο',
+                                    children:[
+                                        {id:'emak-3',name:'3η Ε.Μ.Α.Κ.',type:'emak',icon:'hard-hat'},
+                                        {id:'emode-3',name:'3η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'emode-19',name:'19η Ε.ΜΟ.Δ.Ε.',type:'emode',icon:'tree'},
+                                        {id:'dipyn-heraklion',name:'ΔΙ.Π.Υ.Ν. Ηρακλείου',type:'prefecture',icon:'building',location:'Ηράκλειο'},
+                                        {id:'dipyn-chania',name:'ΔΙ.Π.Υ.Ν. Χανίων',type:'prefecture',icon:'building',location:'Χανιά'},
+                                        {id:'dipyn-rethymno',name:'ΔΙ.Π.Υ.Ν. Ρεθύμνου',type:'prefecture',icon:'building',location:'Ρέθυμνο'},
+                                        {id:'dipyn-lasithi',name:'ΔΙ.Π.Υ.Ν. Λασιθίου',type:'prefecture',icon:'building',location:'Άγιος Νικόλαος'}
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        const TYPE_LABELS = {
+            root:'Κεντρική',
+            inspector:'Γενικός Επιθεωρητής',
+            coordinator:'Συντονιστής',
+            region:'Περιφερειακή Διοίκηση',
+            prefecture:'Διοίκηση Νομού',
+            unit:'Ειδική Μονάδα',
+            emak:'Ε.Μ.Α.Κ.',
+            emode:'Ε.ΜΟ.Δ.Ε.'
+        };
+        const STATUS_LABELS = {pending:'Εκκρεμεί','in-progress':'Σε Εξέλιξη',completed:'Ολοκληρώθηκε'};
+        const PRIORITY_LABELS = {low:'Χαμηλή',medium:'Μεσαία',high:'Υψηλή'};
+        const CATEGORY_LABELS = {
+            general:'Γενικά',
+            operational:'Επιχειρησιακά',
+            administrative:'Διοικητικά',
+            equipment:'Εξοπλισμός',
+            training:'Εκπαίδευση',
+            personnel:'Προσωπικό'
+        };
+        let currentUnitId='root';
+        let taskToDelete=null;
+
+        function getTasks(){return JSON.parse(localStorage.getItem('ps_regional_tasks')||'[]');}
+        function saveTasks(tasks){localStorage.setItem('ps_regional_tasks',JSON.stringify(tasks));}
+        function generateId(){return'task_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
+        function findUnit(node,id){if(node.id===id)return node;if(node.children){for(let child of node.children){const found=findUnit(child,id);if(found)return found;}}return null;}
+        function getUnitPath(node,id,path=[]){path.push({id:node.id,name:node.name});if(node.id===id)return path;if(node.children){for(let child of node.children){const result=getUnitPath(child,id,[...path]);if(result)return result;}}return null;}
+        function getAllChildIds(node){let ids=[node.id];if(node.children){node.children.forEach(child=>{ids=ids.concat(getAllChildIds(child));});}return ids;}
+        function getUnitStats(unitId){const unit=findUnit(ORG_DATA,unitId);const unitIds=unit?getAllChildIds(unit):[unitId];const tasks=getTasks().filter(t=>unitIds.includes(t.unitId));const now=new Date();return{pending:tasks.filter(t=>t.status==='pending').length,inProgress:tasks.filter(t=>t.status==='in-progress').length,completed:tasks.filter(t=>t.status==='completed').length,overdue:tasks.filter(t=>t.deadline&&t.status!=='completed'&&new Date(t.deadline)<now).length};}
+
+        function buildOrgTree(node,container){
+            const item=document.createElement('div');
+            item.className='org-item';
+            item.dataset.id=node.id;
+            const hasChildren=node.children&&node.children.length>0;
+            const stats=getUnitStats(node.id);
+            const pending=stats.pending+stats.inProgress;
+            const header=document.createElement('div');
+            header.className='org-header';
+            header.innerHTML=`<span class="org-toggle ${hasChildren?'':'hidden'}"><i class="fas fa-chevron-right"></i></span><span class="org-icon ${node.type}"><i class="fas fa-${node.icon}"></i></span><span class="org-name" title="${node.name}">${node.name}</span>${pending>0?`<span class="org-badge">${pending}</span>`:''}`;
+            header.addEventListener('click',e=>{
+                if(hasChildren&&e.target.closest('.org-toggle')){
+                    const toggle=header.querySelector('.org-toggle');
+                    const children=item.querySelector('.org-children');
+                    toggle.classList.toggle('expanded');
+                    children.classList.toggle('expanded');
+                }else{
+                    loadUnit(node.id);
+                }
+            });
+            item.appendChild(header);
+            if(hasChildren){
+                const children=document.createElement('div');
+                children.className='org-children';
+                node.children.forEach(child=>buildOrgTree(child,children));
+                item.appendChild(children);
+            }
+            container.appendChild(item);
+        }
+
+        function loadUnit(unitId){
+            currentUnitId=unitId;
+            const unit=findUnit(ORG_DATA,unitId);
+            if(!unit)return;
+            document.getElementById('unitTitle').textContent=unit.name;
+            document.getElementById('unitType').textContent=TYPE_LABELS[unit.type]||unit.type;
+            const locationDiv=document.getElementById('unitLocation');
+            if(unit.location){
+                document.getElementById('locationText').textContent=unit.location;
+                locationDiv.style.display='flex';
+            }else{
+                locationDiv.style.display='none';
+            }
+            const path=getUnitPath(ORG_DATA,unitId);
+            document.getElementById('breadcrumb').innerHTML=path.map(p=>`<a href="#" onclick="loadUnit('${p.id}');return false;">${p.name}</a>`).join('');
+            const stats=getUnitStats(unitId);
+            document.getElementById('sPending').textContent=stats.pending;
+            document.getElementById('sProgress').textContent=stats.inProgress;
+            document.getElementById('sCompleted').textContent=stats.completed;
+            document.getElementById('sOverdue').textContent=stats.overdue;
+            loadSubunits(unit);
+            renderTasks();
+            document.querySelectorAll('.org-header').forEach(h=>h.classList.remove('active'));
+            const activeHeader=document.querySelector(`[data-id="${unitId}"] > .org-header`);
+            if(activeHeader)activeHeader.classList.add('active');
+            expandToUnit(unitId);
+            if(window.innerWidth<1024)closeSidebar();
+        }
+
+        function loadSubunits(unit){
+            const section=document.getElementById('subunitsSection');
+            const grid=document.getElementById('subunitsGrid');
+            if(!unit.children||unit.children.length===0){
+                section.style.display='none';
+                return;
+            }
+            section.style.display='block';
+            grid.innerHTML='';
+            unit.children.forEach(child=>{
+                const stats=getUnitStats(child.id);
+                const card=document.createElement('div');
+                card.className=`subunit-card ${child.type==='emak'?'emak':''} ${child.type==='emode'?'emode':''}`;
+                card.onclick=()=>loadUnit(child.id);
+                card.innerHTML=`<div class="subunit-header"><span class="subunit-name"><i class="fas fa-${child.icon}" style="margin-right:0.5rem;"></i>${child.name}</span><span class="subunit-type">${TYPE_LABELS[child.type]||child.type}</span></div>${child.location?`<div style="font-size:0.8rem;color:var(--gray-600);margin-bottom:0.5rem;"><i class="fas fa-map-marker-alt"></i> ${child.location}</div>`:''}<div class="subunit-stats"><span class="subunit-stat p"><i class="fas fa-clock"></i> ${stats.pending}</span><span class="subunit-stat i"><i class="fas fa-spinner"></i> ${stats.inProgress}</span><span class="subunit-stat c"><i class="fas fa-check"></i> ${stats.completed}</span></div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderTasks(){
+            const tasks=getTasks().filter(t=>t.unitId===currentUnitId);
+            const statusFilter=document.getElementById('filterStatus').value;
+            const priorityFilter=document.getElementById('filterPriority').value;
+            let filtered=tasks;
+            if(statusFilter)filtered=filtered.filter(t=>t.status===statusFilter);
+            if(priorityFilter)filtered=filtered.filter(t=>t.priority===priorityFilter);
+            filtered.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+            const container=document.getElementById('tasksList');
+            if(filtered.length===0){
+                container.innerHTML=`<div class="empty-state"><i class="fas fa-clipboard-list"></i><p>Δεν υπάρχουν εκκρεμότητες</p></div>`;
+                return;
+            }
+            container.innerHTML=filtered.map(task=>{
+                const now=new Date();
+                const isOverdue=task.deadline&&task.status!=='completed'&&new Date(task.deadline)<now;
+                const deadlineText=task.deadline?new Date(task.deadline).toLocaleDateString('el-GR'):'';
+                return `<div class="task-item ${task.priority} ${task.status==='completed'?'done':''}" data-id="${task.id}"><div class="task-checkbox"><input type="checkbox" ${task.status==='completed'?'checked':''} onchange="toggleTask('${task.id}')"></div><div class="task-content"><div class="task-title" onclick="showDetail('${task.id}')">${task.title}</div><div class="task-meta"><span class="status-badge ${task.status}">${STATUS_LABELS[task.status]}</span><span><i class="fas fa-flag"></i> ${PRIORITY_LABELS[task.priority]}</span>${task.deadline?`<span class="${isOverdue?'overdue':''}"><i class="fas fa-calendar"></i> ${deadlineText}${isOverdue?' (!)':''}</span>`:''}${task.assignee?`<span><i class="fas fa-user"></i> ${task.assignee}</span>`:''}</div></div><div class="task-actions"><button onclick="editTask('${task.id}')" title="Επεξεργασία"><i class="fas fa-edit"></i></button><button class="del" onclick="confirmDelete('${task.id}')" title="Διαγραφή"><i class="fas fa-trash"></i></button></div></div>`;
+            }).join('');
+        }
+
+        function expandToUnit(unitId){
+            const path=getUnitPath(ORG_DATA,unitId);
+            if(!path)return;
+            path.forEach(p=>{
+                const item=document.querySelector(`.org-item[data-id="${p.id}"]`);
+                if(item){
+                    const toggle=item.querySelector(':scope > .org-header .org-toggle');
+                    const children=item.querySelector(':scope > .org-children');
+                    if(toggle)toggle.classList.add('expanded');
+                    if(children)children.classList.add('expanded');
+                }
+            });
+        }
+
+        function refreshTree(){
+            document.getElementById('orgTree').innerHTML='';
+            buildOrgTree(ORG_DATA,document.getElementById('orgTree'));
+        }
+
+        function toggleTask(id){
+            const tasks=getTasks();
+            const task=tasks.find(t=>t.id===id);
+            if(task){
+                task.status=task.status==='completed'?'pending':'completed';
+                task.updatedAt=new Date().toISOString();
+                saveTasks(tasks);
+                renderTasks();
+                loadUnit(currentUnitId);
+                refreshTree();
+                showToast('Η κατάσταση ενημερώθηκε','success');
+            }
+        }
+
+        function openAddModal(){
+            document.getElementById('modalTitle').textContent='Νέα Εκκρεμότητα';
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value='';
+            openModal('taskModal');
+        }
+
+        function editTask(id){
+            const task=getTasks().find(t=>t.id===id);
+            if(!task)return;
+            document.getElementById('modalTitle').textContent='Επεξεργασία';
+            document.getElementById('taskId').value=task.id;
+            document.getElementById('taskTitle').value=task.title;
+            document.getElementById('taskDesc').value=task.description||'';
+            document.getElementById('taskPriority').value=task.priority;
+            document.getElementById('taskStatus').value=task.status;
+            document.getElementById('taskDeadline').value=task.deadline||'';
+            document.getElementById('taskAssignee').value=task.assignee||'';
+            document.getElementById('taskCategory').value=task.category||'general';
+            openModal('taskModal');
+        }
+
+        function saveTask(e){
+            e.preventDefault();
+            const tasks=getTasks();
+            const id=document.getElementById('taskId').value;
+            const taskData={
+                id:id||generateId(),
+                unitId:currentUnitId,
+                title:document.getElementById('taskTitle').value.trim(),
+                description:document.getElementById('taskDesc').value.trim(),
+                priority:document.getElementById('taskPriority').value,
+                status:document.getElementById('taskStatus').value,
+                deadline:document.getElementById('taskDeadline').value||null,
+                assignee:document.getElementById('taskAssignee').value.trim(),
+                category:document.getElementById('taskCategory').value,
+                updatedAt:new Date().toISOString()
+            };
+            if(id){
+                const index=tasks.findIndex(t=>t.id===id);
+                if(index!==-1){
+                    taskData.createdAt=tasks[index].createdAt;
+                    tasks[index]=taskData;
+                }
+            }else{
+                taskData.createdAt=new Date().toISOString();
+                tasks.push(taskData);
+            }
+            saveTasks(tasks);
+            closeModal('taskModal');
+            renderTasks();
+            loadUnit(currentUnitId);
+            refreshTree();
+            showToast(id?'Ενημερώθηκε':'Δημιουργήθηκε','success');
+        }
+
+        function confirmDelete(id){
+            taskToDelete=id;
+            openModal('deleteModal');
+        }
+
+        function deleteTask(){
+            if(!taskToDelete)return;
+            let tasks=getTasks();
+            tasks=tasks.filter(t=>t.id!==taskToDelete);
+            saveTasks(tasks);
+            closeModal('deleteModal');
+            taskToDelete=null;
+            renderTasks();
+            loadUnit(currentUnitId);
+            refreshTree();
+            showToast('Διαγράφηκε','success');
+        }
+
+        function showDetail(id){
+            const task=getTasks().find(t=>t.id===id);
+            if(!task)return;
+            const unit=findUnit(ORG_DATA,task.unitId);
+            const isOverdue=task.deadline&&task.status!=='completed'&&new Date(task.deadline)<new Date();
+            document.getElementById('detailContent').innerHTML=`<h3 style="color:var(--primary);margin-bottom:1rem;">${task.title}</h3><div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;"><span class="status-badge ${task.status}">${STATUS_LABELS[task.status]}</span><span class="status-badge" style="background:${task.priority==='high'?'#f8d7da':task.priority==='medium'?'#fff3cd':'#d4edda'};">${PRIORITY_LABELS[task.priority]}</span>${isOverdue?'<span class="status-badge" style="background:#f8d7da;color:#721c24;">Εκπρόθεσμο</span>':''}</div>${task.description?`<div class="detail-section"><h4>Περιγραφή</h4><p>${task.description}</p></div>`:''}<div class="detail-grid"><div class="detail-section"><h4>Μονάδα</h4><p>${unit?unit.name:'-'}</p></div><div class="detail-section"><h4>Κατηγορία</h4><p>${CATEGORY_LABELS[task.category]||'Γενικά'}</p></div>${task.assignee?`<div class="detail-section"><h4>Υπεύθυνος</h4><p>${task.assignee}</p></div>`:''}${task.deadline?`<div class="detail-section"><h4>Προθεσμία</h4><p>${new Date(task.deadline).toLocaleDateString('el-GR')}</p></div>`:''}<div class="detail-section"><h4>Δημιουργήθηκε</h4><p>${new Date(task.createdAt).toLocaleDateString('el-GR')}</p></div><div class="detail-section"><h4>Τελ. Ενημέρωση</h4><p>${new Date(task.updatedAt).toLocaleDateString('el-GR')}</p></div></div><div class="form-actions"><button class="btn btn-secondary" data-close="detailModal">Κλείσιμο</button><button class="btn btn-primary" onclick="editTask('${task.id}');closeModal('detailModal');"><i class="fas fa-edit"></i> Επεξεργασία</button></div>`;
+            openModal('detailModal');
+        }
+
+        function showStats(){
+            const tasks=getTasks();
+            const now=new Date();
+            const total=tasks.length;
+            const pending=tasks.filter(t=>t.status==='pending').length;
+            const inProgress=tasks.filter(t=>t.status==='in-progress').length;
+            const completed=tasks.filter(t=>t.status==='completed').length;
+            const overdue=tasks.filter(t=>t.deadline&&t.status!=='completed'&&new Date(t.deadline)<now).length;
+            const byUnit={};
+            tasks.forEach(t=>{
+                const unit=findUnit(ORG_DATA,t.unitId);
+                if(unit){
+                    byUnit[unit.name]=(byUnit[unit.name]||0)+1;
+                }
+            });
+            document.getElementById('statsContent').innerHTML=`<div class="stats-grid" style="margin-bottom:2rem;"><div class="stat-box pending"><div><span class="stat-number">${total}</span><span class="stat-label">Σύνολο</span></div></div><div class="stat-box pending"><div><span class="stat-number">${pending}</span><span class="stat-label">Εκκρεμούν</span></div></div><div class="stat-box progress"><div><span class="stat-number">${inProgress}</span><span class="stat-label">Σε Εξέλιξη</span></div></div><div class="stat-box completed"><div><span class="stat-number">${completed}</span><span class="stat-label">Ολοκληρώθηκαν</span></div></div><div class="stat-box overdue"><div><span class="stat-number">${overdue}</span><span class="stat-label">Εκπρόθεσμα</span></div></div></div><h4 style="margin-bottom:1rem;">Μονάδες με τις περισσότερες εκκρεμότητες</h4><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:var(--gray-100);"><th style="padding:0.5rem;text-align:left;border-bottom:1px solid var(--gray-300);">Μονάδα</th><th style="padding:0.5rem;text-align:right;border-bottom:1px solid var(--gray-300);">Πλήθος</th></tr></thead><tbody>${Object.entries(byUnit).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([name,count])=>`<tr><td style="padding:0.5rem;border-bottom:1px solid var(--gray-200);font-size:0.9rem;">${name}</td><td style="padding:0.5rem;text-align:right;border-bottom:1px solid var(--gray-200);">${count}</td></tr>`).join('')}</tbody></table>`;
+            openModal('statsModal');
+        }
+
+        function exportData(){
+            const data={exportDate:new Date().toISOString(),type:'Περιφερειακές Υπηρεσίες',tasks:getTasks()};
+            const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url;
+            a.download='ps_perifereiakes_'+new Date().toISOString().split('T')[0]+'.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Εξαγωγή ολοκληρώθηκε','success');
+        }
+
+        function openModal(id){document.getElementById(id).classList.add('active');}
+        function closeModal(id){document.getElementById(id).classList.remove('active');}
+
+        function showToast(message,type='info'){
+            const container=document.getElementById('toastContainer');
+            const toast=document.createElement('div');
+            toast.className=`toast ${type}`;
+            toast.innerHTML=`<i class="fas fa-${type==='success'?'check':type==='error'?'times':'info'}-circle"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(()=>toast.remove(),3000);
+        }
+
+        function openSidebar(){
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('overlay').classList.add('active');
+        }
+
+        function closeSidebar(){
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function setupInstallPrompt(){
+            const banner=document.getElementById('installBanner');
+            const btn=document.getElementById('installBtn');
+            const dismiss=document.getElementById('installDismiss');
+            let deferredPrompt=null;
+            const hideBanner=()=>banner.classList.remove('show');
+            window.addEventListener('beforeinstallprompt',e=>{
+                e.preventDefault();
+                deferredPrompt=e;
+                banner.classList.add('show');
+            });
+            window.addEventListener('appinstalled',()=>{
+                hideBanner();
+                showToast('Η εφαρμογή εγκαταστάθηκε','success');
+                deferredPrompt=null;
+            });
+            btn.addEventListener('click',async()=>{
+                if(!deferredPrompt)return;
+                deferredPrompt.prompt();
+                const {outcome}=await deferredPrompt.userChoice;
+                deferredPrompt=null;
+                if(outcome==='accepted'){
+                    showToast('Η εγκατάσταση ξεκίνησε','success');
+                }else{
+                    showToast('Η εγκατάσταση ακυρώθηκε','warning');
+                }
+                hideBanner();
+            });
+            dismiss.addEventListener('click',hideBanner);
+            if(window.matchMedia('(display-mode: standalone)').matches){
+                hideBanner();
+            }
+        }
+
+        function registerServiceWorker(){
+            if(!('serviceWorker' in navigator))return;
+            const offlineUrl=JSON.stringify(window.location.href);
+            const swCode=`
+                const CACHE_NAME='ps-regional-pwa-v1';
+                const OFFLINE_URL=${offlineUrl};
+                self.addEventListener('install',event=>{
+                    event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll([OFFLINE_URL])));
+                    self.skipWaiting();
+                });
+                self.addEventListener('activate',event=>{
+                    event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))));
+                    self.clients.claim();
+                });
+                self.addEventListener('fetch',event=>{
+                    if(event.request.method!=='GET')return;
+                    if(event.request.mode==='navigate'){
+                        event.respondWith(fetch(event.request).catch(()=>caches.match(OFFLINE_URL)));
+                        return;
+                    }
+                    event.respondWith(
+                        caches.match(event.request).then(response=>response||fetch(event.request).then(networkResponse=>{
+                            const copy=networkResponse.clone();
+                            caches.open(CACHE_NAME).then(cache=>cache.put(event.request,copy));
+                            return networkResponse;
+                        }).catch(()=>caches.match(OFFLINE_URL))))
+                });
+            `;
+            const swBlob=new Blob([swCode],{type:'application/javascript'});
+            const swUrl=URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl).catch(err=>console.error('Service worker registration failed:',err));
+        }
+
+        document.addEventListener('DOMContentLoaded',()=>{
+            buildOrgTree(ORG_DATA,document.getElementById('orgTree'));
+            loadUnit('root');
+            document.getElementById('menuBtn').addEventListener('click',openSidebar);
+            document.getElementById('sidebarClose').addEventListener('click',closeSidebar);
+            document.getElementById('overlay').addEventListener('click',closeSidebar);
+            document.getElementById('addTaskBtn').addEventListener('click',openAddModal);
+            document.getElementById('taskForm').addEventListener('submit',saveTask);
+            document.getElementById('confirmDelete').addEventListener('click',deleteTask);
+            document.getElementById('statsBtn').addEventListener('click',showStats);
+            document.getElementById('exportBtn').addEventListener('click',exportData);
+            document.getElementById('filterStatus').addEventListener('change',renderTasks);
+            document.getElementById('filterPriority').addEventListener('change',renderTasks);
+            document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeModal(btn.dataset.close)));
+            document.getElementById('searchTree').addEventListener('input',e=>{
+                const query=e.target.value.toLowerCase();
+                document.querySelectorAll('.org-item').forEach(item=>{
+                    const name=item.querySelector('.org-name').textContent.toLowerCase();
+                    item.style.display=name.includes(query)?'':'none';
+                });
+            });
+            document.addEventListener('keydown',e=>{
+                if(e.key==='Escape'){
+                    document.querySelectorAll('.modal.active').forEach(m=>m.classList.remove('active'));
+                }
+            });
+            setupInstallPrompt();
+            registerServiceWorker();
+        });
+
+        window.loadUnit=loadUnit;
+        window.toggleTask=toggleTask;
+        window.editTask=editTask;
+        window.confirmDelete=confirmDelete;
+        window.showDetail=showDetail;
+        window.closeModal=closeModal;
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c41e3a">
+    <meta name="description" content="Εφαρμογή Παρακολούθησης Εκκρεμοτήτων - Επιτελείο Π.Σ.">
+    <title>Επιτελείο Π.Σ. - Εκκρεμότητες</title>
+    
+    <!-- Εικονίδιο για PWA -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23c41e3a'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='white'>ΠΣ</text></svg>">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --primary: #c41e3a;
+            --primary-dark: #a01830;
+            --secondary: #1e3a5f;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --header-height: 60px;
+            --sidebar-width: 300px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            line-height: 1.5;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin-right: 1rem;
+            border-radius: 4px;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ===== Sidebar ===== */
+        .sidebar {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: white;
+            box-shadow: var(--shadow-lg);
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1rem;
+            color: var(--secondary);
+        }
+
+        .sidebar-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            cursor: pointer;
+        }
+
+        .sidebar-search {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .sidebar-search input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+        }
+
+        .sidebar-search input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .org-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .org-item {
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .org-header {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .org-header:hover {
+            background: var(--gray-100);
+        }
+
+        .org-header.active {
+            background: rgba(196, 30, 58, 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .org-toggle {
+            width: 18px;
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            transition: transform 0.2s;
+        }
+
+        .org-toggle.expanded {
+            transform: rotate(90deg);
+        }
+
+        .org-toggle.hidden {
+            visibility: hidden;
+        }
+
+        .org-icon {
+            font-size: 0.9rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .org-icon.headquarters { color: var(--primary); }
+        .org-icon.branch { color: var(--secondary); }
+        .org-icon.direction { color: var(--info); }
+        .org-icon.department { color: var(--success); }
+        .org-icon.office { color: var(--warning); }
+
+        .org-name {
+            flex: 1;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .org-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .org-children {
+            display: none;
+            padding-left: 1.25rem;
+            background: var(--gray-50);
+        }
+
+        .org-children.expanded {
+            display: block;
+        }
+
+        .overlay {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ===== Main Content ===== */
+        .main {
+            margin-top: var(--header-height);
+            padding: 1.5rem;
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        @media (min-width: 1024px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            .main {
+                margin-left: var(--sidebar-width);
+            }
+            .overlay {
+                display: none;
+            }
+            .sidebar-close {
+                display: none;
+            }
+        }
+
+        /* ===== Breadcrumb ===== */
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        .breadcrumb a {
+            color: var(--gray-600);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary);
+        }
+
+        .breadcrumb a:not(:last-child)::after {
+            content: '/';
+            margin-left: 0.5rem;
+            color: var(--gray-400);
+        }
+
+        .breadcrumb a:last-child {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* ===== Unit Card ===== */
+        .unit-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .unit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .unit-title {
+            font-size: 1.4rem;
+            color: var(--secondary);
+        }
+
+        .unit-type {
+            background: var(--secondary);
+            color: white;
+            padding: 0.3rem 0.75rem;
+            border-radius: var(--radius);
+            font-size: 0.8rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-box {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius);
+        }
+
+        .stat-box i {
+            font-size: 1.5rem;
+        }
+
+        .stat-box.pending { background: #fff3cd; }
+        .stat-box.pending i { color: var(--warning); }
+        .stat-box.progress { background: #cce5ff; }
+        .stat-box.progress i { color: var(--info); }
+        .stat-box.completed { background: #d4edda; }
+        .stat-box.completed i { color: var(--success); }
+        .stat-box.overdue { background: #f8d7da; }
+        .stat-box.overdue i { color: var(--danger); }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        /* ===== Sub Units ===== */
+        .subunits-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+
+        .subunits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .subunit-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .subunit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .subunit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .subunit-name {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .subunit-type {
+            font-size: 0.7rem;
+            background: var(--gray-200);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            color: var(--gray-600);
+        }
+
+        .subunit-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+        }
+
+        .subunit-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .subunit-stat.p { color: var(--warning); }
+        .subunit-stat.i { color: var(--info); }
+        .subunit-stat.c { color: var(--success); }
+
+        /* ===== Tasks Section ===== */
+        .tasks-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .tasks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tasks-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 0.85rem;
+            background: white;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        /* ===== Tasks List ===== */
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .task-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            border-left: 4px solid var(--gray-400);
+            transition: background 0.2s;
+        }
+
+        .task-item:hover {
+            background: var(--gray-100);
+        }
+
+        .task-item.high { border-left-color: var(--danger); }
+        .task-item.medium { border-left-color: var(--warning); }
+        .task-item.low { border-left-color: var(--success); }
+        .task-item.done { opacity: 0.6; }
+
+        .task-checkbox input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+        }
+
+        .task-title:hover {
+            color: var(--primary);
+        }
+
+        .done .task-title {
+            text-decoration: line-through;
+            color: var(--gray-500);
+        }
+
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        .task-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .task-meta .overdue {
+            color: var(--danger);
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.pending { background: #fff3cd; color: #856404; }
+        .status-badge.in-progress { background: #cce5ff; color: #004085; }
+        .status-badge.completed { background: #d4edda; color: #155724; }
+
+        .task-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .task-actions button {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: var(--gray-500);
+            border-radius: 4px;
+        }
+
+        .task-actions button:hover {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .task-actions button.del:hover {
+            background: #f8d7da;
+            color: var(--danger);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray-500);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* ===== Modal ===== */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-header h2 {
+            font-size: 1.2rem;
+            color: var(--secondary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray-500);
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* ===== Toast ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 3000;
+        }
+
+        .toast {
+            background: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius);
+            margin-top: 0.5rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); color: var(--gray-800); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1rem; }
+            .header-subtitle { display: none; }
+            .unit-title { font-size: 1.2rem; }
+            .tasks-header { flex-direction: column; }
+            .tasks-actions { width: 100%; }
+            .filter-select { flex: 1; }
+            .task-item { flex-direction: column; }
+            .task-actions { justify-content: flex-end; }
+        }
+
+        /* Detail View */
+        .detail-section {
+            margin-bottom: 1rem;
+        }
+        .detail-section h4 {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <button class="menu-btn" id="menuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="header-title">
+            <div class="logo">ΠΣ</div>
+            <div>
+                <h1>Επιτελείο Πυροσβεστικού Σώματος</h1>
+                <span class="header-subtitle">Παρακολούθηση Εκκρεμοτήτων</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="statsBtn" title="Στατιστικά">
+                <i class="fas fa-chart-bar"></i>
+            </button>
+            <button class="icon-btn" id="exportBtn" title="Εξαγωγή">
+                <i class="fas fa-download"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-sitemap"></i> Οργανόγραμμα</h2>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="sidebar-search">
+            <input type="text" id="searchTree" placeholder="Αναζήτηση...">
+        </div>
+        <nav class="org-tree" id="orgTree"></nav>
+    </aside>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main" id="main">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb" id="breadcrumb"></nav>
+
+        <!-- Unit Info -->
+        <div class="unit-card">
+            <div class="unit-header">
+                <h2 class="unit-title" id="unitTitle">Αρχηγείο Πυροσβεστικού Σώματος</h2>
+                <span class="unit-type" id="unitType">Αρχηγείο</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box pending">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <span class="stat-number" id="sPending">0</span>
+                        <span class="stat-label">Εκκρεμούν</span>
+                    </div>
+                </div>
+                <div class="stat-box progress">
+                    <i class="fas fa-spinner"></i>
+                    <div>
+                        <span class="stat-number" id="sProgress">0</span>
+                        <span class="stat-label">Σε Εξέλιξη</span>
+                    </div>
+                </div>
+                <div class="stat-box completed">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <span class="stat-number" id="sCompleted">0</span>
+                        <span class="stat-label">Ολοκληρώθηκαν</span>
+                    </div>
+                </div>
+                <div class="stat-box overdue">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <span class="stat-number" id="sOverdue">0</span>
+                        <span class="stat-label">Εκπρόθεσμα</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub Units -->
+        <div class="subunits-section" id="subunitsSection">
+            <h3 class="section-title"><i class="fas fa-sitemap"></i> Υποκείμενες Μονάδες</h3>
+            <div class="subunits-grid" id="subunitsGrid"></div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="tasks-section">
+            <div class="tasks-header">
+                <h3 class="section-title"><i class="fas fa-tasks"></i> Εκκρεμότητες</h3>
+                <div class="tasks-actions">
+                    <select class="filter-select" id="filterStatus">
+                        <option value="">Όλες οι καταστάσεις</option>
+                        <option value="pending">Εκκρεμεί</option>
+                        <option value="in-progress">Σε Εξέλιξη</option>
+                        <option value="completed">Ολοκληρώθηκε</option>
+                    </select>
+                    <select class="filter-select" id="filterPriority">
+                        <option value="">Προτεραιότητα</option>
+                        <option value="high">Υψηλή</option>
+                        <option value="medium">Μεσαία</option>
+                        <option value="low">Χαμηλή</option>
+                    </select>
+                    <button class="btn btn-primary" id="addTaskBtn">
+                        <i class="fas fa-plus"></i> Νέα
+                    </button>
+                </div>
+            </div>
+            <div class="tasks-list" id="tasksList"></div>
+        </div>
+    </main>
+
+    <!-- Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Νέα Εκκρεμότητα</h2>
+                <button class="modal-close" data-close="taskModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+                    
+                    <div class="form-group">
+                        <label>Τίτλος *</label>
+                        <input type="text" id="taskTitle" required placeholder="Τίτλος εκκρεμότητας">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Περιγραφή</label>
+                        <textarea id="taskDesc" rows="3" placeholder="Περιγραφή..."></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Προτεραιότητα</label>
+                            <select id="taskPriority">
+                                <option value="low">Χαμηλή</option>
+                                <option value="medium" selected>Μεσαία</option>
+                                <option value="high">Υψηλή</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Κατάσταση</label>
+                            <select id="taskStatus">
+                                <option value="pending">Εκκρεμεί</option>
+                                <option value="in-progress">Σε Εξέλιξη</option>
+                                <option value="completed">Ολοκληρώθηκε</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Προθεσμία</label>
+                            <input type="date" id="taskDeadline">
+                        </div>
+                        <div class="form-group">
+                            <label>Υπεύθυνος</label>
+                            <input type="text" id="taskAssignee" placeholder="Όνομα">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Κατηγορία</label>
+                        <select id="taskCategory">
+                            <option value="general">Γενικά</option>
+                            <option value="administrative">Διοικητικά</option>
+                            <option value="operational">Επιχειρησιακά</option>
+                            <option value="technical">Τεχνικά</option>
+                            <option value="training">Εκπαίδευση</option>
+                            <option value="budget">Προϋπολογισμός</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close="taskModal">Ακύρωση</button>
+                        <button type="submit" class="btn btn-primary">Αποθήκευση</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Λεπτομέρειες</h2>
+                <button class="modal-close" data-close="detailModal">&times;</button>
+            </div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content" style="max-width:400px">
+            <div class="modal-header">
+                <h2>Επιβεβαίωση</h2>
+                <button class="modal-close" data-close="deleteModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Διαγραφή αυτής της εκκρεμότητας;</p>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" data-close="deleteModal">Ακύρωση</button>
+                    <button class="btn btn-danger" id="confirmDelete">Διαγραφή</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal" id="statsModal">
+        <div class="modal-content" style="max-width:600px">
+            <div class="modal-header">
+                <h2>Στατιστικά</h2>
+                <button class="modal-close" data-close="statsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="statsContent"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+    // =====================================================
+    // ΟΡΓΑΝΟΓΡΑΜΜΑ ΕΠΙΤΕΛΕΙΟΥ
+    // =====================================================
+    const ORG_DATA = {
+        id: 'hq',
+        name: 'Αρχηγείο Πυροσβεστικού Σώματος',
+        type: 'headquarters',
+        icon: 'building',
+        children: [
+            {
+                id: 'branch-ops',
+                name: 'Κλάδος Πυροσβεστικών Επιχειρήσεων',
+                type: 'branch',
+                icon: 'fire',
+                children: [
+                    {
+                        id: 'dir-fire',
+                        name: 'Διεύθυνση Πυρόσβεσης',
+                        type: 'direction',
+                        icon: 'fire-extinguisher',
+                        children: [
+                            { id: 'dept-fire-ops', name: 'Τμήμα Επιχειρήσεων & Πυροπροστασίας Ειδικών Εγκαταστάσεων', type: 'department', icon: 'clipboard' },
+                            { id: 'dept-fire-airport', name: 'Τμήμα Πυροπροστασίας Αεροδρομίων, Ελικοδρομίων & Λιμένων', type: 'department', icon: 'plane' },
+                            { id: 'dept-fire-civil', name: 'Τμήμα Επιχειρήσεων Πολιτικής Προστασίας', type: 'department', icon: 'shield-alt' },
+                            { id: 'dept-fire-psea', name: 'Τμήμα Π.Σ.Ε.Α. & Πολιτικής Άμυνας', type: 'department', icon: 'user-shield' },
+                            { id: 'dept-fire-drones', name: 'Τμήμα Μη Επανδρωμένων Αεροσκαφών', type: 'department', icon: 'helicopter' },
+                            { id: 'dept-fire-prevent', name: 'Τμήμα Προληπτικής Πυροπροστασίας', type: 'department', icon: 'hard-hat' }
+                        ]
+                    },
+                    {
+                        id: 'dir-disaster',
+                        name: 'Διεύθυνση Αντιμετώπισης Καταστροφών',
+                        type: 'direction',
+                        icon: 'exclamation-triangle',
+                        children: [
+                            { id: 'dept-dis-ops', name: 'Τμήμα Επιχειρήσεων και Εκπαιδεύσεων', type: 'department', icon: 'tasks' },
+                            { id: 'dept-dis-equip', name: 'Τμήμα Υλικού και Ειδικού Εξοπλισμού', type: 'department', icon: 'toolbox' },
+                            { id: 'dept-dis-eu', name: 'Τμήμα Διευρωπαϊκής Συνεργασίας Δασοπυρόσβεσης', type: 'department', icon: 'globe-europe' },
+                            { id: 'dept-dis-ports', name: 'Τμήμα Λιμένων', type: 'department', icon: 'anchor' }
+                        ]
+                    },
+                    {
+                        id: 'dir-forest',
+                        name: 'Διεύθυνση Δασοπυρόσβεσης',
+                        type: 'direction',
+                        icon: 'tree',
+                        children: [
+                            { id: 'dept-for-aerial', name: 'Τμήμα Αεροπυρόσβεσης & Εναέριας Επιτήρησης', type: 'department', icon: 'plane-departure' },
+                            { id: 'dept-for-plan', name: 'Τμήμα Σχεδιασμού Αντιμετώπισης Δασικών Πυρκαγιών', type: 'department', icon: 'map' },
+                            { id: 'dept-for-net', name: 'Τμήμα Εγκαταστάσεων και Δικτύων', type: 'department', icon: 'network-wired' },
+                            { id: 'dept-for-psych', name: 'Τμήμα Ψυχοκοινωνικής Μέριμνας', type: 'department', icon: 'heart' }
+                        ]
+                    },
+                    {
+                        id: 'dir-third',
+                        name: 'Διεύθυνση Παροχής Υπηρεσιών προς Τρίτους',
+                        type: 'direction',
+                        icon: 'hands-helping',
+                        children: [
+                            { id: 'dept-third-highway', name: 'Τμήμα Αυτοκινητοδρόμων', type: 'department', icon: 'road' },
+                            { id: 'dept-third-airport', name: 'Τμήμα Αεροδρομίων και Υδατοδρομίων', type: 'department', icon: 'plane-arrival' },
+                            { id: 'dept-third-health', name: 'Τμήμα Υγείας και Ασφάλειας', type: 'department', icon: 'heartbeat' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'branch-admin',
+                name: 'Κλάδος Διοικητικής Υποστήριξης',
+                type: 'branch',
+                icon: 'building',
+                children: [
+                    {
+                        id: 'dir-org',
+                        name: 'Διεύθυνση Οργάνωσης και Ασφάλειας',
+                        type: 'direction',
+                        icon: 'sitemap',
+                        children: [
+                            { id: 'dept-org-org', name: 'Τμήμα Οργάνωσης', type: 'department', icon: 'project-diagram' },
+                            { id: 'dept-org-vol', name: 'Τμήμα Οργάνωσης Εθελοντισμού', type: 'department', icon: 'hands' },
+                            { id: 'off-org-sec', name: 'Γραφείο Γραμματείας', type: 'office', icon: 'file-alt' },
+                            { id: 'off-org-mov', name: 'Γραφείο Κίνησης', type: 'office', icon: 'car' }
+                        ]
+                    },
+                    {
+                        id: 'dir-it',
+                        name: 'Διεύθυνση Πληροφορικής και Επικοινωνιών',
+                        type: 'direction',
+                        icon: 'laptop',
+                        children: [
+                            { id: 'dept-it-sys', name: 'Τμήμα Υποστήριξης Πληροφοριακών Συστημάτων', type: 'department', icon: 'server' },
+                            { id: 'dept-it-stats', name: 'Τμήμα Ανάλυσης, Προγραμματισμού & Στατιστικής', type: 'department', icon: 'chart-line' },
+                            { id: 'dept-it-comm', name: 'Τμήμα Ενσύρματης & Ασύρματης Επικοινωνίας', type: 'department', icon: 'broadcast-tower' },
+                            { id: 'dept-it-gis', name: 'Τμήμα Επιχειρησιακής Πληροφορικής & Γεωχωρικής Ανάλυσης', type: 'department', icon: 'map-marked-alt' }
+                        ]
+                    },
+                    {
+                        id: 'dir-strategy',
+                        name: 'Διεύθυνση Στρατηγικού Σχεδιασμού & Επικοινωνίας',
+                        type: 'direction',
+                        icon: 'chess',
+                        children: [
+                            { id: 'dept-str-plan', name: 'Τμήμα Στρατηγικού Σχεδιασμού', type: 'department', icon: 'bullseye' },
+                            { id: 'dept-str-eu', name: 'Τμήμα Επενδύσεων & Ευρωπαϊκών Προγραμμάτων', type: 'department', icon: 'euro-sign' },
+                            { id: 'dept-str-int', name: 'Τμήμα Διεθνών Σχέσεων', type: 'department', icon: 'globe' },
+                            { id: 'dept-str-sport', name: 'Τμήμα Αθλητισμού', type: 'department', icon: 'running' },
+                            { id: 'dept-str-pr', name: 'Τμήμα Δημοσίων Σχέσεων & Εκδόσεων', type: 'department', icon: 'newspaper' },
+                            { id: 'dept-str-press', name: 'Τμήμα Τύπου & Επικοινωνίας', type: 'department', icon: 'microphone' }
+                        ]
+                    },
+                    {
+                        id: 'dir-hr',
+                        name: 'Διεύθυνση Ανθρωπίνων Πόρων',
+                        type: 'direction',
+                        icon: 'users',
+                        children: [
+                            { id: 'dept-hr-off', name: 'Τμήμα Αξιωματικών και Πυρονόμων', type: 'department', icon: 'user-tie' },
+                            { id: 'dept-hr-nco', name: 'Τμήμα Υπαξιωματικών & Πυροσβεστών', type: 'department', icon: 'hard-hat' },
+                            { id: 'dept-hr-seas', name: 'Τμήμα Πυροσβεστών Πενταετούς & Εποχικής Απασχόλησης', type: 'department', icon: 'calendar-alt' },
+                            { id: 'dept-hr-dev', name: 'Τμήμα Ανάπτυξης Ανθρωπίνων Πόρων', type: 'department', icon: 'graduation-cap' },
+                            { id: 'dept-hr-civ', name: 'Τμήμα Πολιτικού Προσωπικού', type: 'department', icon: 'id-card' },
+                            { id: 'dept-hr-ret', name: 'Τμήμα Συντάξεων και Αποστράτων', type: 'department', icon: 'user-clock' }
+                        ]
+                    },
+                    {
+                        id: 'dir-support',
+                        name: 'Διεύθυνση Υποστήριξης',
+                        type: 'direction',
+                        icon: 'hands-helping',
+                        children: [
+                            { id: 'dept-sup-budget', name: 'Τμήμα Παρακολούθησης Προϋπολογισμού', type: 'department', icon: 'wallet' },
+                            { id: 'dept-sup-mat', name: 'Τμήμα Διαχείρισης Υλικού', type: 'department', icon: 'boxes' },
+                            { id: 'dept-sup-proc', name: 'Τμήμα Προμηθειών - Δαπανών', type: 'department', icon: 'shopping-cart' },
+                            { id: 'dept-sup-pay', name: 'Τμήμα Αποδοχών & Ασφάλισης', type: 'department', icon: 'money-bill-wave' },
+                            { id: 'dept-sup-court', name: 'Τμήμα Εκτέλεσης Δικαστικών Αποφάσεων', type: 'department', icon: 'gavel' }
+                        ]
+                    },
+                    {
+                        id: 'dir-tech',
+                        name: 'Διεύθυνση Τεχνικής Υποστήριξης & Υποδομών',
+                        type: 'direction',
+                        icon: 'tools',
+                        children: [
+                            { id: 'dept-tech-spec', name: 'Τμήμα Τεχνικών Προδιαγραφών', type: 'department', icon: 'ruler-combined' },
+                            { id: 'dept-tech-mech', name: 'Τμήμα Μηχανολογικού & Ειδικού Εξοπλισμού', type: 'department', icon: 'cogs' },
+                            { id: 'dept-tech-infra', name: 'Τμήμα Υποδομών', type: 'department', icon: 'building' },
+                            { id: 'dept-tech-work', name: 'Τμήμα Πυροσβεστικών Συνεργείων', type: 'department', icon: 'wrench' }
+                        ]
+                    },
+                    {
+                        id: 'dir-legal',
+                        name: 'Διεύθυνση Νομικής Υποστήριξης',
+                        type: 'direction',
+                        icon: 'balance-scale',
+                        children: [
+                            { id: 'dept-leg-1', name: '1ο Τμήμα Νομικών Υποθέσεων (Α.Π.Σ.)', type: 'department', icon: 'file-contract' },
+                            { id: 'dept-leg-2', name: '2ο Τμήμα Νομικών Υποθέσεων (Θεσσαλία)', type: 'department', icon: 'file-contract' },
+                            { id: 'dept-leg-3', name: '3ο Τμήμα Νομικών Υποθέσεων (Δυτ. Ελλάδα)', type: 'department', icon: 'file-contract' },
+                            { id: 'dept-leg-4', name: '4ο Τμήμα Νομικών Υποθέσεων (Κεντ. Μακεδονία)', type: 'department', icon: 'file-contract' },
+                            { id: 'dept-leg-court', name: 'Τμήμα Δικαστικό', type: 'department', icon: 'landmark' }
+                        ]
+                    },
+                    {
+                        id: 'dir-edu',
+                        name: 'Διεύθυνση Εκπαίδευσης',
+                        type: 'direction',
+                        icon: 'graduation-cap',
+                        children: [
+                            { id: 'dept-edu-acad', name: 'Τμήμα Πυροσβεστικής Ακαδημίας', type: 'department', icon: 'university' },
+                            { id: 'dept-edu-cont', name: 'Τμήμα Επιμόρφωσης & Μετεκπαιδεύσεων', type: 'department', icon: 'chalkboard-teacher' },
+                            { id: 'dept-edu-spec', name: 'Τμήμα Ειδικών Εκπαιδεύσεων', type: 'department', icon: 'user-graduate' },
+                            { id: 'dept-edu-life', name: 'Τμήμα Δια Βίου Εκπαίδευσης', type: 'department', icon: 'book-reader' }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+
+    // Labels
+    const TYPE_LABELS = {
+        headquarters: 'Αρχηγείο',
+        branch: 'Κλάδος',
+        direction: 'Διεύθυνση',
+        department: 'Τμήμα',
+        office: 'Γραφείο'
+    };
+
+    const STATUS_LABELS = {
+        'pending': 'Εκκρεμεί',
+        'in-progress': 'Σε Εξέλιξη',
+        'completed': 'Ολοκληρώθηκε'
+    };
+
+    const PRIORITY_LABELS = {
+        'low': 'Χαμηλή',
+        'medium': 'Μεσαία',
+        'high': 'Υψηλή'
+    };
+
+    const CATEGORY_LABELS = {
+        'general': 'Γενικά',
+        'administrative': 'Διοικητικά',
+        'operational': 'Επιχειρησιακά',
+        'technical': 'Τεχνικά',
+        'training': 'Εκπαίδευση',
+        'budget': 'Προϋπολογισμός'
+    };
+
+    // =====================================================
+    // APP STATE & STORAGE
+    // =====================================================
+    let currentUnitId = 'hq';
+    let taskToDelete = null;
+
+    // Storage functions
+    function getTasks() {
+        return JSON.parse(localStorage.getItem('ps_tasks') || '[]');
+    }
+
+    function saveTasks(tasks) {
+        localStorage.setItem('ps_tasks', JSON.stringify(tasks));
+    }
+
+    function generateId() {
+        return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // =====================================================
+    // HELPER FUNCTIONS
+    // =====================================================
+    function findUnit(node, id) {
+        if (node.id === id) return node;
+        if (node.children) {
+            for (let child of node.children) {
+                const found = findUnit(child, id);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    function getUnitPath(node, id, path = []) {
+        path.push({ id: node.id, name: node.name });
+        if (node.id === id) return path;
+        if (node.children) {
+            for (let child of node.children) {
+                const result = getUnitPath(child, id, [...path]);
+                if (result) return result;
+            }
+        }
+        return null;
+    }
+
+    function getAllChildIds(node) {
+        let ids = [node.id];
+        if (node.children) {
+            node.children.forEach(child => {
+                ids = ids.concat(getAllChildIds(child));
+            });
+        }
+        return ids;
+    }
+
+    function getUnitStats(unitId) {
+        const unit = findUnit(ORG_DATA, unitId);
+        const unitIds = unit ? getAllChildIds(unit) : [unitId];
+        const tasks = getTasks().filter(t => unitIds.includes(t.unitId));
+        const now = new Date();
+
+        return {
+            pending: tasks.filter(t => t.status === 'pending').length,
+            inProgress: tasks.filter(t => t.status === 'in-progress').length,
+            completed: tasks.filter(t => t.status === 'completed').length,
+            overdue: tasks.filter(t => 
+                t.deadline && 
+                t.status !== 'completed' && 
+                new Date(t.deadline) < now
+            ).length
+        };
+    }
+
+    // =====================================================
+    // UI FUNCTIONS
+    // =====================================================
+    function buildOrgTree(node, container) {
+        const item = document.createElement('div');
+        item.className = 'org-item';
+        item.dataset.id = node.id;
+
+        const hasChildren = node.children && node.children.length > 0;
+        const stats = getUnitStats(node.id);
+        const pending = stats.pending + stats.inProgress;
+
+        const header = document.createElement('div');
+        header.className = 'org-header';
+        header.innerHTML = `
+            <span class="org-toggle ${hasChildren ? '' : 'hidden'}">
+                <i class="fas fa-chevron-right"></i>
+            </span>
+            <span class="org-icon ${node.type}">
+                <i class="fas fa-${node.icon}"></i>
+            </span>
+            <span class="org-name" title="${node.name}">${node.name}</span>
+            ${pending > 0 ? `<span class="org-badge">${pending}</span>` : ''}
+        `;
+
+        header.addEventListener('click', (e) => {
+            if (hasChildren && e.target.closest('.org-toggle')) {
+                const toggle = header.querySelector('.org-toggle');
+                const children = item.querySelector('.org-children');
+                toggle.classList.toggle('expanded');
+                children.classList.toggle('expanded');
+            } else {
+                loadUnit(node.id);
+            }
+        });
+
+        item.appendChild(header);
+
+        if (hasChildren) {
+            const children = document.createElement('div');
+            children.className = 'org-children';
+            node.children.forEach(child => buildOrgTree(child, children));
+            item.appendChild(children);
+        }
+
+        container.appendChild(item);
+    }
+
+    function loadUnit(unitId) {
+        currentUnitId = unitId;
+        const unit = findUnit(ORG_DATA, unitId);
+        if (!unit) return;
+
+        // Update header
+        document.getElementById('unitTitle').textContent = unit.name;
+        document.getElementById('unitType').textContent = TYPE_LABELS[unit.type] || unit.type;
+
+        // Update breadcrumb
+        const path = getUnitPath(ORG_DATA, unitId);
+        document.getElementById('breadcrumb').innerHTML = path.map(p => 
+            `<a href="#" onclick="loadUnit('${p.id}'); return false;">${p.name}</a>`
+        ).join('');
+
+        // Update stats
+        const stats = getUnitStats(unitId);
+        document.getElementById('sPending').textContent = stats.pending;
+        document.getElementById('sProgress').textContent = stats.inProgress;
+        document.getElementById('sCompleted').textContent = stats.completed;
+        document.getElementById('sOverdue').textContent = stats.overdue;
+
+        // Load subunits
+        loadSubunits(unit);
+
+        // Load tasks
+        renderTasks();
+
+        // Update active state in sidebar
+        document.querySelectorAll('.org-header').forEach(h => h.classList.remove('active'));
+        const activeHeader = document.querySelector(`[data-id="${unitId}"] > .org-header`);
+        if (activeHeader) activeHeader.classList.add('active');
+
+        // Expand tree to show unit
+        expandToUnit(unitId);
+
+        // Close sidebar on mobile
+        if (window.innerWidth < 1024) {
+            closeSidebar();
+        }
+    }
+
+    function loadSubunits(unit) {
+        const section = document.getElementById('subunitsSection');
+        const grid = document.getElementById('subunitsGrid');
+
+        if (!unit.children || unit.children.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        grid.innerHTML = '';
+
+        unit.children.forEach(child => {
+            const stats = getUnitStats(child.id);
+            const card = document.createElement('div');
+            card.className = 'subunit-card';
+            card.onclick = () => loadUnit(child.id);
+            card.innerHTML = `
+                <div class="subunit-header">
+                    <span class="subunit-name">${child.name}</span>
+                    <span class="subunit-type">${TYPE_LABELS[child.type] || child.type}</span>
+                </div>
+                <div class="subunit-stats">
+                    <span class="subunit-stat p"><i class="fas fa-clock"></i> ${stats.pending}</span>
+                    <span class="subunit-stat i"><i class="fas fa-spinner"></i> ${stats.inProgress}</span>
+                    <span class="subunit-stat c"><i class="fas fa-check"></i> ${stats.completed}</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function renderTasks() {
+        const tasks = getTasks().filter(t => t.unitId === currentUnitId);
+        const statusFilter = document.getElementById('filterStatus').value;
+        const priorityFilter = document.getElementById('filterPriority').value;
+
+        let filtered = tasks;
+        if (statusFilter) filtered = filtered.filter(t => t.status === statusFilter);
+        if (priorityFilter) filtered = filtered.filter(t => t.priority === priorityFilter);
+
+        // Sort by date desc
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const container = document.getElementById('tasksList');
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>Δεν υπάρχουν εκκρεμότητες</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filtered.map(task => {
+            const now = new Date();
+            const isOverdue = task.deadline && task.status !== 'completed' && new Date(task.deadline) < now;
+            const deadlineText = task.deadline ? new Date(task.deadline).toLocaleDateString('el-GR') : '';
+
+            return `
+                <div class="task-item ${task.priority} ${task.status === 'completed' ? 'done' : ''}" data-id="${task.id}">
+                    <div class="task-checkbox">
+                        <input type="checkbox" ${task.status === 'completed' ? 'checked' : ''} 
+                               onchange="toggleTask('${task.id}')">
+                    </div>
+                    <div class="task-content">
+                        <div class="task-title" onclick="showDetail('${task.id}')">${task.title}</div>
+                        <div class="task-meta">
+                            <span class="status-badge ${task.status}">${STATUS_LABELS[task.status]}</span>
+                            <span><i class="fas fa-flag"></i> ${PRIORITY_LABELS[task.priority]}</span>
+                            ${task.deadline ? `<span class="${isOverdue ? 'overdue' : ''}"><i class="fas fa-calendar"></i> ${deadlineText}${isOverdue ? ' (!)' : ''}</span>` : ''}
+                            ${task.assignee ? `<span><i class="fas fa-user"></i> ${task.assignee}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button onclick="editTask('${task.id}')" title="Επεξεργασία">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="del" onclick="confirmDelete('${task.id}')" title="Διαγραφή">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function expandToUnit(unitId) {
+        const path = getUnitPath(ORG_DATA, unitId);
+        if (!path) return;
+
+        path.forEach(p => {
+            const item = document.querySelector(`.org-item[data-id="${p.id}"]`);
+            if (item) {
+                const toggle = item.querySelector(':scope > .org-header .org-toggle');
+                const children = item.querySelector(':scope > .org-children');
+                if (toggle) toggle.classList.add('expanded');
+                if (children) children.classList.add('expanded');
+            }
+        });
+    }
+
+    function refreshTree() {
+        document.getElementById('orgTree').innerHTML = '';
+        buildOrgTree(ORG_DATA, document.getElementById('orgTree'));
+    }
+
+    // =====================================================
+    // TASK OPERATIONS
+    // =====================================================
+    function toggleTask(id) {
+        const tasks = getTasks();
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            task.status = task.status === 'completed' ? 'pending' : 'completed';
+            task.updatedAt = new Date().toISOString();
+            saveTasks(tasks);
+            renderTasks();
+            loadUnit(currentUnitId);
+            refreshTree();
+            showToast('Η κατάσταση ενημερώθηκε', 'success');
+        }
+    }
+
+    function openAddModal() {
+        document.getElementById('modalTitle').textContent = 'Νέα Εκκρεμότητα';
+        document.getElementById('taskForm').reset();
+        document.getElementById('taskId').value = '';
+        openModal('taskModal');
+    }
+
+    function editTask(id) {
+        const task = getTasks().find(t => t.id === id);
+        if (!task) return;
+
+        document.getElementById('modalTitle').textContent = 'Επεξεργασία';
+        document.getElementById('taskId').value = task.id;
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskDesc').value = task.description || '';
+        document.getElementById('taskPriority').value = task.priority;
+        document.getElementById('taskStatus').value = task.status;
+        document.getElementById('taskDeadline').value = task.deadline || '';
+        document.getElementById('taskAssignee').value = task.assignee || '';
+        document.getElementById('taskCategory').value = task.category || 'general';
+        openModal('taskModal');
+    }
+
+    function saveTask(e) {
+        e.preventDefault();
+        const tasks = getTasks();
+        const id = document.getElementById('taskId').value;
+
+        const taskData = {
+            id: id || generateId(),
+            unitId: currentUnitId,
+            title: document.getElementById('taskTitle').value.trim(),
+            description: document.getElementById('taskDesc').value.trim(),
+            priority: document.getElementById('taskPriority').value,
+            status: document.getElementById('taskStatus').value,
+            deadline: document.getElementById('taskDeadline').value || null,
+            assignee: document.getElementById('taskAssignee').value.trim(),
+            category: document.getElementById('taskCategory').value,
+            updatedAt: new Date().toISOString()
+        };
+
+        if (id) {
+            const index = tasks.findIndex(t => t.id === id);
+            if (index !== -1) {
+                taskData.createdAt = tasks[index].createdAt;
+                tasks[index] = taskData;
+            }
+        } else {
+            taskData.createdAt = new Date().toISOString();
+            tasks.push(taskData);
+        }
+
+        saveTasks(tasks);
+        closeModal('taskModal');
+        renderTasks();
+        loadUnit(currentUnitId);
+        refreshTree();
+        showToast(id ? 'Ενημερώθηκε' : 'Δημιουργήθηκε', 'success');
+    }
+
+    function confirmDelete(id) {
+        taskToDelete = id;
+        openModal('deleteModal');
+    }
+
+    function deleteTask() {
+        if (!taskToDelete) return;
+        let tasks = getTasks();
+        tasks = tasks.filter(t => t.id !== taskToDelete);
+        saveTasks(tasks);
+        closeModal('deleteModal');
+        taskToDelete = null;
+        renderTasks();
+        loadUnit(currentUnitId);
+        refreshTree();
+        showToast('Διαγράφηκε', 'success');
+    }
+
+    function showDetail(id) {
+        const task = getTasks().find(t => t.id === id);
+        if (!task) return;
+
+        const unit = findUnit(ORG_DATA, task.unitId);
+        const isOverdue = task.deadline && task.status !== 'completed' && new Date(task.deadline) < new Date();
+
+        document.getElementById('detailContent').innerHTML = `
+            <h3 style="color:var(--secondary);margin-bottom:1rem;">${task.title}</h3>
+            <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+                <span class="status-badge ${task.status}">${STATUS_LABELS[task.status]}</span>
+                <span class="status-badge" style="background:${task.priority === 'high' ? '#f8d7da' : task.priority === 'medium' ? '#fff3cd' : '#d4edda'};">
+                    ${PRIORITY_LABELS[task.priority]}
+                </span>
+                ${isOverdue ? '<span class="status-badge" style="background:#f8d7da;color:#721c24;">Εκπρόθεσμο</span>' : ''}
+            </div>
+            
+            ${task.description ? `<div class="detail-section"><h4>Περιγραφή</h4><p>${task.description}</p></div>` : ''}
+            
+            <div class="detail-grid">
+                <div class="detail-section">
+                    <h4>Μονάδα</h4>
+                    <p>${unit ? unit.name : '-'}</p>
+                </div>
+                <div class="detail-section">
+                    <h4>Κατηγορία</h4>
+                    <p>${CATEGORY_LABELS[task.category] || 'Γενικά'}</p>
+                </div>
+                ${task.assignee ? `<div class="detail-section"><h4>Υπεύθυνος</h4><p>${task.assignee}</p></div>` : ''}
+                ${task.deadline ? `<div class="detail-section"><h4>Προθεσμία</h4><p>${new Date(task.deadline).toLocaleDateString('el-GR')}</p></div>` : ''}
+                <div class="detail-section">
+                    <h4>Δημιουργήθηκε</h4>
+                    <p>${new Date(task.createdAt).toLocaleDateString('el-GR')}</p>
+                </div>
+                <div class="detail-section">
+                    <h4>Τελ. Ενημέρωση</h4>
+                    <p>${new Date(task.updatedAt).toLocaleDateString('el-GR')}</p>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn btn-secondary" data-close="detailModal">Κλείσιμο</button>
+                <button class="btn btn-primary" onclick="editTask('${task.id}'); closeModal('detailModal');">
+                    <i class="fas fa-edit"></i> Επεξεργασία
+                </button>
+            </div>
+        `;
+        openModal('detailModal');
+    }
+
+    // =====================================================
+    // STATS & EXPORT
+    // =====================================================
+    function showStats() {
+        const tasks = getTasks();
+        const now = new Date();
+
+        const total = tasks.length;
+        const pending = tasks.filter(t => t.status === 'pending').length;
+        const inProgress = tasks.filter(t => t.status === 'in-progress').length;
+        const completed = tasks.filter(t => t.status === 'completed').length;
+        const overdue = tasks.filter(t => t.deadline && t.status !== 'completed' && new Date(t.deadline) < now).length;
+
+        // Count by category
+        const byCategory = {};
+        tasks.forEach(t => {
+            const cat = t.category || 'general';
+            byCategory[cat] = (byCategory[cat] || 0) + 1;
+        });
+
+        document.getElementById('statsContent').innerHTML = `
+            <div class="stats-grid" style="margin-bottom:2rem;">
+                <div class="stat-box pending">
+                    <div>
+                        <span class="stat-number">${total}</span>
+                        <span class="stat-label">Σύνολο</span>
+                    </div>
+                </div>
+                <div class="stat-box pending">
+                    <div>
+                        <span class="stat-number">${pending}</span>
+                        <span class="stat-label">Εκκρεμούν</span>
+                    </div>
+                </div>
+                <div class="stat-box progress">
+                    <div>
+                        <span class="stat-number">${inProgress}</span>
+                        <span class="stat-label">Σε Εξέλιξη</span>
+                    </div>
+                </div>
+                <div class="stat-box completed">
+                    <div>
+                        <span class="stat-number">${completed}</span>
+                        <span class="stat-label">Ολοκληρώθηκαν</span>
+                    </div>
+                </div>
+                <div class="stat-box overdue">
+                    <div>
+                        <span class="stat-number">${overdue}</span>
+                        <span class="stat-label">Εκπρόθεσμα</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom:1rem;">Ανά Κατηγορία</h4>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:1rem;">
+                <thead>
+                    <tr style="background:var(--gray-100);">
+                        <th style="padding:0.5rem;text-align:left;border-bottom:1px solid var(--gray-300);">Κατηγορία</th>
+                        <th style="padding:0.5rem;text-align:right;border-bottom:1px solid var(--gray-300);">Πλήθος</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Object.entries(byCategory).map(([cat, count]) => `
+                        <tr>
+                            <td style="padding:0.5rem;border-bottom:1px solid var(--gray-200);">${CATEGORY_LABELS[cat] || cat}</td>
+                            <td style="padding:0.5rem;text-align:right;border-bottom:1px solid var(--gray-200);">${count}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        openModal('statsModal');
+    }
+
+    function exportData() {
+        const data = {
+            exportDate: new Date().toISOString(),
+            tasks: getTasks()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ps_ekkremotites_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Εξαγωγή ολοκληρώθηκε', 'success');
+    }
+
+    // =====================================================
+    // MODAL & TOAST
+    // =====================================================
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}-circle"></i> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // =====================================================
+    // SIDEBAR
+    // =====================================================
+    function openSidebar() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('overlay').classList.add('active');
+    }
+
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('active');
+    }
+
+    // =====================================================
+    // EVENT LISTENERS
+    // =====================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        // Build tree
+        buildOrgTree(ORG_DATA, document.getElementById('orgTree'));
+        
+        // Load initial unit
+        loadUnit('hq');
+
+        // Menu toggle
+        document.getElementById('menuBtn').addEventListener('click', openSidebar);
+        document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+        document.getElementById('overlay').addEventListener('click', closeSidebar);
+
+        // Add task
+        document.getElementById('addTaskBtn').addEventListener('click', openAddModal);
+
+        // Form submit
+        document.getElementById('taskForm').addEventListener('submit', saveTask);
+
+        // Delete confirm
+        document.getElementById('confirmDelete').addEventListener('click', deleteTask);
+
+        // Stats
+        document.getElementById('statsBtn').addEventListener('click', showStats);
+
+        // Export
+        document.getElementById('exportBtn').addEventListener('click', exportData);
+
+        // Filters
+        document.getElementById('filterStatus').addEventListener('change', renderTasks);
+        document.getElementById('filterPriority').addEventListener('change', renderTasks);
+
+        // Close modals
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.close));
+        });
+
+        // Search in tree
+        document.getElementById('searchTree').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.org-item').forEach(item => {
+                const name = item.querySelector('.org-name').textContent.toLowerCase();
+                item.style.display = name.includes(query) ? '' : 'none';
+            });
+        });
+
+        // Close modal on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => {
+                    m.classList.remove('active');
+                });
+            }
+        });
+    });
+
+    // Make functions global for inline handlers
+    window.loadUnit = loadUnit;
+    window.toggleTask = toggleTask;
+    window.editTask = editTask;
+    window.confirmDelete = confirmDelete;
+    window.showDetail = showDetail;
+    window.closeModal = closeModal;
+    </script>
+</body>
+</html>
+
