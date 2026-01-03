@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SportClub - PWA Demo</title>
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Fallback icon -->
+  <link rel="icon" href="/web-app-manifest-192x192.png" />
+
+  <!-- Theme color -->
+  <meta name="theme-color" content="#2c3e50" />
+
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; padding:1rem; background:#f6f8fa; color:#222}
+    header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+    .logo{width:48px;height:48px;border-radius:8px;background:#2c3e50;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+    main{max-width:900px;margin:0 auto}
+    #status{font-size:0.9rem;color:#666}
+    .card{background:#fff;padding:1rem;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:1rem}
+    ul{padding-left:1.2rem}
+    li{margin-bottom:0.5rem}
+    .controls{display:flex;gap:0.5rem}
+    input[type="text"]{flex:1;padding:0.5rem;border-radius:6px;border:1px solid #ddd}
+    button{padding:0.5rem 0.8rem;border-radius:6px;border:none;background:#2c3e50;color:#fff;cursor:pointer}
+    small.offline{color:#c44}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">SC</div>
+    <div>
+      <h1 style="margin:0">SportClub - PWA</h1>
+      <div id="status">Φόρτωση...</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Λίστα αντικειμένων</h2>
+      <p>Τα δεδομένα συγχρονίζονται online με Firebase Firestore. Όταν είσαι offline, οι προσθήκες μπαίνουν σε outbox και συγχρονίζονται όταν επανέλθεις online.</p>
+      <div class="controls">
+        <input id="item-input" type="text" placeholder="Προσθήκη νέου αντικειμένου..." />
+        <button id="add-btn">Προσθήκη</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Αποθηκευμένα αντικείμενα</h3>
+      <ul id="items-list"></ul>
+      <div id="sync-info"></div>
+    </section>
+  </main>
+
+  <!-- Firebase SDKs (CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase config (αντικατάστησε τα placeholders) -->
+  <script src="/firebase-config.js"></script>
+
+  <!-- App logic -->
+  <script src="/main.js"></script>
+
+  <!-- Register service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(() => console.log('Service Worker εγγράφηκε'))
+        .catch(err => console.warn('SW registration failed', err));
+    }
+  </script>
+</body>
+</html>
